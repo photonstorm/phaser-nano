@@ -24,18 +24,31 @@
 
     }
 
+    var x = 0;
+    var bob1;
+    var bob2;
+    var bob3;
+
     function create() {
 
         console.log('Create');
 
-        var bob = game.addChild(100, 100, 'atari');
-        var bob2 = game.addChild(150, 150, 'atari');
-        var bob3 = game.addChild(200, 200, 'atari');
+        bob1 = game.addChild(x, 0, 'atari');
+        bob2 = game.addChild(x, 200, 'atari');
+        bob3 = game.addChild(x, 400, 'atari');
 
     }
 
     function update() {
 
+        if (x < 700)
+        {
+            x++;
+
+            bob1.x = x;
+            bob2.x = x;
+            bob3.x = x;
+        }
 
     }
 

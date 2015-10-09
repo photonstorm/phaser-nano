@@ -85,6 +85,7 @@
         this.textures = [];
         this._UID = 0;
 
+        /*
         this.defaultShader = new PhaserMicro.AbstractFilter([
             'precision lowp float;',
             'varying vec2 vTextureCoord;',
@@ -94,6 +95,7 @@
             '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor ;',
             '}'
         ]);
+        */
 
         this.boot();
 
@@ -198,13 +200,15 @@
 
             this.renderWebGL();
 
+            /*
             if (this.frameCount < 4)
             {
                 window.requestAnimationFrame(this.update.bind(this));
                 this.frameCount++;
             }
+            */
 
-            // window.requestAnimationFrame(this.update.bind(this));
+            window.requestAnimationFrame(this.update.bind(this));
 
         },
 
@@ -321,20 +325,6 @@
             this.currentBlendMode = 99999;
 
             this.initShader();
-
-            /*
-            var shader = new PhaserMicro.Shader(gl);
-
-            shader.fragmentSrc = this.defaultShader.fragmentSrc;
-            shader.uniforms = {};
-            shader.init();
-
-            this.defaultShader.shaders[gl.id] = shader;
-
-            this.gl.useProgram(shader.program);
-
-            this.setAttribs(shader.attributes);
-            */
 
         },
 
@@ -453,11 +443,7 @@
             this.currentBatchSize = 0;
             this.batchSprites = [];
 
-            PhaserMicro.log('renderWebGL start', '#ff0000');
-
-            //  Instead of every loop, can we do once in init?
-            // this.setShader(this.defaultShader.shaders[gl.id]);
-            // this.shader = this.defaultShader.shaders[gl.id];
+            // PhaserMicro.log('renderWebGL start', '#ff0000');
 
             this.dirty = true;
 
@@ -467,7 +453,7 @@
                 this.renderSprite(this.children[i]);
             }
 
-            PhaserMicro.log('renderWebGL end', '#ff0000');
+            // PhaserMicro.log('renderWebGL end', '#ff0000');
 
             this.flushBatch();
 
@@ -545,13 +531,13 @@
 
         renderSprite: function (sprite) {
 
-            PhaserMicro.log('renderSprite');
+            // PhaserMicro.log('renderSprite');
 
             var texture = sprite.texture;
             
             if (this.currentBatchSize >= this.batchSize)
             {
-                PhaserMicro.log('flush 1');
+                // PhaserMicro.log('flush 1');
                 this.flushBatch();
                 this.currentBaseTexture = texture.baseTexture;
             }
@@ -668,7 +654,7 @@
             verticies[index++] = alpha;
             verticies[index++] = tint;
             
-            PhaserMicro.log('added to batch array');
+            // PhaserMicro.log('added to batch array');
 
             // increment the batchsize
             this.batchSprites[this.currentBatchSize++] = sprite;
@@ -683,7 +669,7 @@
                 return;
             }
 
-            PhaserMicro.log('flush');
+            // PhaserMicro.log('flush');
 
             var gl = this.gl;
 
@@ -691,7 +677,7 @@
             {
                 //  Always dirty the first pass through
                 //  but subsequent calls may be clean
-                PhaserMicro.log('flush dirty');
+                // PhaserMicro.log('flush dirty');
 
                 this.dirty = false;
 
@@ -704,9 +690,6 @@
 
                 //  set the projection vector (done every loop)
                 gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
-
-                // shader =  this.defaultShader.shaders[gl.id];
-                // gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
 
                 //  Does stride ever change? (doubtful)
                 var stride = this.vertSize * 4;
@@ -728,12 +711,12 @@
             //  Upload the verts to the buffer
             if (this.currentBatchSize > (this.batchSize * 0.5))
             {
-                PhaserMicro.log('flush verts 1');
+                // PhaserMicro.log('flush verts 1');
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
             }
             else
             {
-                PhaserMicro.log('flush verts 2');
+                // PhaserMicro.log('flush verts 2');
                 var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
             }
@@ -753,7 +736,7 @@
 
                 if (currentBaseTexture !== nextTexture)
                 {
-                    PhaserMicro.log('texture !== next');
+                    // PhaserMicro.log('texture !== next');
 
                     if (batchSize > 0)
                     {
@@ -781,200 +764,17 @@
             this.currentBatchSize = 0;
 
         },
-
-        _flushBatch: function () {
-
-            // If the batch is length 0 then return as there is nothing to draw
-            if (this.currentBatchSize===0)return;
-
-            PhaserMicro.log('flush');
-
-            var gl = this.gl;
-            var shader;
-
-            if (this.dirty)
-            {
-                PhaserMicro.log('flush dirty');
-
-                this.dirty = false;
-                // bind the main texture
-                gl.activeTexture(gl.TEXTURE0);
-
-                // bind the buffers
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-
-                //  set the project vector (done every loop)
-                shader =  this.defaultShader.shaders[gl.id];
-                gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
-
-                // this is the same for each shader?
-                var stride =  this.vertSize * 4;
-                gl.vertexAttribPointer(shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
-                gl.vertexAttribPointer(shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
-                gl.vertexAttribPointer(shader.colorAttribute, 2, gl.FLOAT, false, stride, 4 * 4);
-            }
-
-            // upload the verts to the buffer
-            if (this.currentBatchSize > (this.batchSize * 0.5))
-            {
-                PhaserMicro.log('flush verts 1');
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
-            }
-            else
-            {
-                PhaserMicro.log('flush verts 2');
-                var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
-            }
-
-            // var nextTexture, nextBlendMode, nextShader;
-            var nextTexture = null;
-            var batchSize = 0;
-            var start = 0;
-
-            var currentBaseTexture = null;
-            // var currentBlendMode = this.renderSession.blendModeManager.currentBlendMode;
-            // var currentBlendMode = 99999;
-            // var currentShader = null;
-
-            // var blendSwap = false;
-            // var shaderSwap = false;
-            var sprite;
-
-            //  Let's see if we can bind the default shader
-            //  to the world sprite
-
-            // currentShader = nextShader;
-            
-            // shader = this.defaultShader.shaders[gl.id];
-            // gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
-            // gl.uniform2f(shader.offsetVector, this.offset.x, this.offset.y);
-
-
-            for (var i = 0, j = this.currentBatchSize; i < j; i++)
-            {
-                sprite = this.batchSprites[i];
-
-                nextTexture = sprite.texture.baseTexture;
-                // nextBlendMode = sprite.blendMode;
-                // nextShader = sprite.shader || this.defaultShader;
-
-                // blendSwap = currentBlendMode !== nextBlendMode;
-                // shaderSwap = currentShader !== nextShader; // should I use _UIDS???
-
-                // if (currentBaseTexture !== nextTexture || blendSwap || shaderSwap)
-                // if (currentBaseTexture !== nextTexture || shaderSwap)
-                if (currentBaseTexture !== nextTexture)
-                {
-                    PhaserMicro.log('texture !== next');
-
-                    if (batchSize > 0)
-                    {
-                        gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
-                        gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
-                        this.drawCount++;
-                    }
-
-                    start = i;
-                    batchSize = 0;
-                    currentBaseTexture = nextTexture;
-
-                    // if( blendSwap )
-                    // {
-                    //     currentBlendMode = nextBlendMode;
-                    //     this.renderSession.blendModeManager.setBlendMode( currentBlendMode );
-                    // }
-
-                    /*
-                    if (shaderSwap)
-                    {
-                        console.log('shader !== next');
-
-                        currentShader = nextShader;
-                        
-                        shader = currentShader.shaders[gl.id];
-
-                        if (!shader)
-                        {
-                            console.log('shader new');
-                            shader = new PhaserMicro.Shader(gl);
-
-                            shader.fragmentSrc = currentShader.fragmentSrc;
-                            shader.uniforms = currentShader.uniforms;
-                            shader.init();
-
-                            currentShader.shaders[gl.id] = shader;
-                        }
-
-                        // set shader function???
-                        // this.renderSession.shaderManager.setShader(shader);
-
-                        // if (shader.dirty) shader.syncUniforms();
-                        
-                        // set the projection
-                        gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
-                        gl.uniform2f(shader.offsetVector, this.offset.x, this.offset.y);
-                    }
-                    */
-                }
-
-                batchSize++;
-            }
-
-            if (batchSize > 0)
-            {
-                gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
-                gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
-                this.drawCount++;
-            }
-
-            // then reset the batch!
-            this.currentBatchSize = 0;
-
-        },
-
-        /*
-        renderBatch: function (texture, size, startIndex) {
-
-            if(size === 0)return;
-
-            console.log('renderBatch', texture, size, startIndex);
-
-            var gl = this.gl;
-
-            // check if a texture is dirty (do this when it's loaded to avoid these checks)
-            // if (texture._dirty[gl.id])
-            // {
-            //     console.log('rb updateTexture');
-            //     this.updateTexture(texture);
-            // }
-            // else
-            // {
-                console.log('rb bind', gl.id);
-                // bind the current texture
-                gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
-            // }
-
-            // now draw those suckas!
-            gl.drawElements(gl.TRIANGLES, size * 6, gl.UNSIGNED_SHORT, startIndex * 6 * 2);
-            
-            // increment the draw count
-            this.drawCount++;
-
-        },
-        */
 
         updateTexture: function (texture) {
 
-            PhaserMicro.log('updateTexture', texture);
+            PhaserMicro.log('updateTexture: ' + texture);
 
             var gl = this.gl;
 
             if (!texture._glTextures[gl.id])
             {
                 texture._glTextures[gl.id] = gl.createTexture();
-                PhaserMicro.log('updateTexture new id', gl.id);
+                PhaserMicro.log('updateTexture new id: ' + gl.id);
             }
 
             gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
@@ -1845,6 +1645,8 @@
 
     PhaserMicro.identityMatrix = new PhaserMicro.Matrix();
 
+    /*
+
     PhaserMicro.Shader = function(gl) {
 
         this._UID = PhaserMicro._UID++;
@@ -2216,7 +2018,7 @@
 
         return shaderProgram;
     };
-
+    */
 
 
 
