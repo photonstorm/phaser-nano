@@ -72,7 +72,6 @@
             '}'
         ]);
 
-        //  Hit it ...
         this.boot();
 
     };
@@ -214,6 +213,14 @@
 
         },
 
+        renderCanvas: function () {
+
+            this.context.clearRect(0, 0, this.width, this.height);
+
+            this.renderDisplayObject(this.root, this.projection);
+
+        },
+
         handleContextLost: function (event) {
 
             event.preventDefault();
@@ -293,14 +300,6 @@
             shader.init();
 
             this.defaultShader.shaders[gl.id] = shader;
-
-        },
-
-        renderCanvas: function () {
-
-            this.context.clearRect(0, 0, this.width, this.height);
-
-            this.renderDisplayObject(this.root, this.projection);
 
         },
 
@@ -489,6 +488,7 @@
             var tx = worldTransform.tx;
             var ty = worldTransform.ty;
 
+            //  Top Left vert
             // xy
             verticies[index++] = a * w1 + c * h1 + tx;
             verticies[index++] = d * h1 + b * w1 + ty;
@@ -499,6 +499,7 @@
             verticies[index++] = alpha;
             verticies[index++] = tint;
 
+            //  Top Right vert
             // xy
             verticies[index++] = a * w0 + c * h1 + tx;
             verticies[index++] = d * h1 + b * w0 + ty;
@@ -509,6 +510,7 @@
             verticies[index++] = alpha;
             verticies[index++] = tint;
 
+            //  Bottom Right vert
             // xy
             verticies[index++] = a * w0 + c * h0 + tx;
             verticies[index++] = d * h0 + b * w0 + ty;
@@ -519,6 +521,7 @@
             verticies[index++] = alpha;
             verticies[index++] = tint;
 
+            //  Bottom Left vert
             // xy
             verticies[index++] = a * w1 + c * h0 + tx;
             verticies[index++] = d * h0 + b * w1 + ty;
@@ -594,6 +597,9 @@
             var shaderSwap = false;
             var sprite;
 
+            //  Let's see if we can bind the default shader
+            //  to the world sprite
+
             for (var i = 0, j = this.currentBatchSize; i < j; i++)
             {
                 sprite = this.batchSprites[i];
@@ -611,7 +617,14 @@
                 {
                     console.log('texture !== next');
 
-                    this.renderBatch(currentBaseTexture, batchSize, start);
+                    if (batchSize > 0)
+                    {
+                        gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
+                        gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
+                        this.drawCount++;
+                    }
+
+                    // this.renderBatch(currentBaseTexture, batchSize, start);
 
                     start = i;
                     batchSize = 0;
@@ -633,6 +646,7 @@
 
                         if (!shader)
                         {
+                            console.log('shader new');
                             shader = new PhaserMicro.Shader(gl);
 
                             shader.fragmentSrc = currentShader.fragmentSrc;
@@ -645,25 +659,31 @@
                         // set shader function???
                         // this.renderSession.shaderManager.setShader(shader);
 
-                        if (shader.dirty) shader.syncUniforms();
+                        // if (shader.dirty) shader.syncUniforms();
                         
                         // both these only need to be set if they are changing..
                         // set the projection
                         // var projection = this.renderSession.projection;
-                        var projection = this.projection;
-                        gl.uniform2f(shader.projectionVector, projection.x, projection.y);
+                        // var projection = this.projection;
+                        gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
 
-                        // TODO - this is temprorary!
                         // var offsetVector = this.renderSession.offset;
-                        var offsetVector = this.offset;
-                        gl.uniform2f(shader.offsetVector, offsetVector.x, offsetVector.y);
+                        // var offsetVector = this.offset;
+                        gl.uniform2f(shader.offsetVector, this.offset.x, this.offset.y);
                     }
                 }
 
                 batchSize++;
             }
 
-            this.renderBatch(currentBaseTexture, batchSize, start);
+            // this.renderBatch(currentBaseTexture, batchSize, start);
+
+            if (batchSize > 0)
+            {
+                gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
+                gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
+                this.drawCount++;
+            }
 
             // then reset the batch!
             this.currentBatchSize = 0;
@@ -679,17 +699,17 @@
             var gl = this.gl;
 
             // check if a texture is dirty (do this when it's loaded to avoid these checks)
-            if (texture._dirty[gl.id])
-            {
-                console.log('rb updateTexture');
-                this.updateTexture(texture);
-            }
-            else
-            {
+            // if (texture._dirty[gl.id])
+            // {
+            //     console.log('rb updateTexture');
+            //     this.updateTexture(texture);
+            // }
+            // else
+            // {
                 console.log('rb bind', gl.id);
                 // bind the current texture
                 gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
-            }
+            // }
 
             // now draw those suckas!
             gl.drawElements(gl.TRIANGLES, size * 6, gl.UNSIGNED_SHORT, startIndex * 6 * 2);
