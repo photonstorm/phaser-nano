@@ -41,6 +41,8 @@ PhaserMicro.Game = function (width, height, renderer, parent, state) {
 
     this.state = state;
 
+    this.pixelArt = false;
+
     this.cache = null;
     this.load = null;
     this.renderer = null;
@@ -58,6 +60,9 @@ PhaserMicro.BLEND_NORMAL = 0;
 PhaserMicro.BLEND_ADD = 1;
 PhaserMicro.BLEND_MULTIPLY = 2;
 PhaserMicro.BLEND_SCREEN = 3;
+
+PhaserMicro.LINEAR = 0;
+PhaserMicro.NEAREST = 1;
 
 PhaserMicro.Game.prototype = {
 

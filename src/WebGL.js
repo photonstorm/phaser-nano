@@ -118,7 +118,6 @@ PhaserMicro.WebGL.prototype = {
             'attribute vec4 aColor;',
 
             'uniform vec2 projectionVector;',
-            'uniform vec2 offsetVector;',
 
             'varying vec2 vTextureCoord;',
             'varying vec4 vColor;',
@@ -126,7 +125,7 @@ PhaserMicro.WebGL.prototype = {
             'const vec2 center = vec2(-1.0, 1.0);',
 
             'void main(void) {',
-            '   gl_Position = vec4( ((aVertexPosition + offsetVector) / projectionVector) + center , 0.0, 1.0);',
+            '   gl_Position = vec4((aVertexPosition / projectionVector) + center, 0.0, 1.0);',
             '   vTextureCoord = aTextureCoord;',
             '   vec3 color = mod(vec3(aColor.y / 65536.0, aColor.y / 256.0, aColor.y), 256.0) / 256.0;',
             '   vColor = vec4(color * aColor.x, aColor.x);',
@@ -173,7 +172,7 @@ PhaserMicro.WebGL.prototype = {
             //  Shader uniforms
             this.uSampler = gl.getUniformLocation(program, 'uSampler');
             this.projectionVector = gl.getUniformLocation(program, 'projectionVector');
-            this.offsetVector = gl.getUniformLocation(program, 'offsetVector');
+            // this.offsetVector = gl.getUniformLocation(program, 'offsetVector');
             this.dimensions = gl.getUniformLocation(program, 'dimensions');
 
             this.program = program;
@@ -460,7 +459,7 @@ PhaserMicro.WebGL.prototype = {
                 if (batchSize > 0)
                 {
                     console.log('draw1', batchSize);
-                    gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
+                    gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._gl[gl.id]);
                     gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
                     this.drawCount++;
                 }
@@ -476,7 +475,7 @@ PhaserMicro.WebGL.prototype = {
         if (batchSize > 0)
         {
             console.log('draw2', batchSize);
-            gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
+            gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._gl[gl.id]);
             gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
             this.drawCount++;
         }
@@ -488,9 +487,9 @@ PhaserMicro.WebGL.prototype = {
 
     unloadTexture: function (base) {
 
-        for (var i = base._glTextures.length - 1; i >= 0; i--)
+        for (var i = base._gl.length - 1; i >= 0; i--)
         {
-            var glTexture = base._glTextures[i];
+            var glTexture = base._gl[i];
 
             if (this.gl && glTexture)
             {
@@ -498,46 +497,50 @@ PhaserMicro.WebGL.prototype = {
             }
         }
 
-        base._glTextures.length = 0;
+        base._gl.length = 0;
 
         base.dirty();
 
     },
 
-    updateTexture: function (texture) {
-
-        // PhaserMicro.log('updateTexture: ' + texture);
+    loadTexture: function (base) {
 
         var gl = this.gl;
 
-        if (!texture._glTextures[gl.id])
+        if (!base._gl[gl.id])
         {
-            texture._glTextures[gl.id] = gl.createTexture();
+            base._gl[gl.id] = gl.createTexture();
         }
 
-        gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
+        gl.bindTexture(gl.TEXTURE_2D, base._gl[gl.id]);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, base.premultipliedAlpha);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, base.source);
 
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultipliedAlpha);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.source);
-
-        //  Or gl.NEAREST (for pixel art style)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-        if (!texture._powerOf2)
+        if (base.scaleMode)
         {
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            //  scaleMode 1 = Nearest
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         }
         else
+        {
+            //  scaleMode 0 = Linear
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        }
+
+        if (base._pot)
         {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         }
+        else
+        {
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        }
 
-        texture._dirty[gl.id] = false;
-
-        return texture._glTextures[gl.id];
+        base._dirty[gl.id] = false;
 
     },
 
@@ -556,7 +559,7 @@ PhaserMicro.WebGL.prototype = {
         // for(var key in PIXI.TextureCache)
         // {
         //     var texture = PIXI.TextureCache[key].baseTexture;
-        //     texture._glTextures = [];
+        //     texture._gl = [];
         // }
 
         this.contextLost = false;

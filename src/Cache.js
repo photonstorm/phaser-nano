@@ -26,7 +26,12 @@ PhaserMicro.Cache.prototype = {
         };
 
         //  WebGL only
-        this.game.renderer.updateTexture(img.base);
+        if (this.game.pixelArt)
+        {
+            img.base.scaleMode = 1;
+        }
+
+        this.game.renderer.loadTexture(img.base);
 
         this._cache.image[key] = img;
 

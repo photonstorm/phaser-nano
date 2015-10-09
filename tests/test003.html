@@ -20,6 +20,8 @@
 
     function preload () {
 
+        game.pixelArt = true;
+
         game.load.image('sky', 'assets/sky2.png');
         game.load.image('ship', 'assets/bsquadron3.png');
 
@@ -27,15 +29,18 @@
 
     function create() {
 
-        //  Want the ability to just render images directly without sprites?
+        //  Want the ability to just render images directly without sprites
         game.addChild(0, 0, 'sky');
+
+        var sprite;
 
         for (var i = 0; i < 100; i++)
         {
             var x = Math.random() * game.width;
             var y = Math.random() * game.height;
-
-            game.addChild(x, y, 'ship');
+            sprite = game.addChild(x, y, 'ship');
+            sprite.scale.x = 2;
+            sprite.scale.y = 2;
         }
 
     }

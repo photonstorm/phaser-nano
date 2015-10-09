@@ -52,10 +52,11 @@ PhaserMicro.BaseTexture = function (source) {
     this.height = source.height;
     this.source = source;
 
+    this.scaleMode = PhaserMicro.LINEAR;
     this.premultipliedAlpha = true;
 
-    this._glTextures = [];
-    this._powerOf2 = false;
+    this._gl = [];
+    this._pot = false;
     this._dirty = [true, true, true, true];
 
 };
