@@ -1,0 +1,40 @@
+{
+  "name": "PhaserMicro",
+  "version": "1.0.0",
+  "release": "",
+  "description": "",
+  "author": "Richard Davey",
+  "logo": "https://raw.github.com/photonstorm/phaser/master/phaser-logo-small.png",
+  "homepage": "http://phaser.io",
+  "bugs": "https://github.com/photonstorm/phaser-micro/issues",
+  "license": "MIT",
+  "licenseUrl": "http://www.opensource.org/licenses/mit-license.php",
+  "repository": {
+    "type": "git",
+    "url": "https://photonstorm@github.com/photonstorm/phaser-micro.git"
+  },
+  "scripts": {
+    "test": "NODE_ENV=test grunt jshint"
+  },
+  "keywords": [
+    "HTML5",
+    "game",
+    "canvas",
+    "2d",
+    "WebGL",
+    "web audio",
+    "physics",
+    "tweens",
+    "javascript",
+    "typescript"
+  ],
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-copy": "~0.5.0",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-uglify": "~0.3.3",
+    "grunt-contrib-jshint": "~0.10.0",
+    "grunt-jsdoc": "~0.6.3"
+  }
+}
