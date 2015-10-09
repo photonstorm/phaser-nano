@@ -309,7 +309,7 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.DYNAMIC_DRAW);
 
-            this.currentBlendMode = 99999;
+            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
             this.initShader();
 
@@ -422,11 +422,12 @@
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+
             //  Transparent
             // gl.clearColor(0, 0, 0, 0);
 
             //  Black
-            gl.clearColor(0.5, 0, 0, 1);
+            gl.clearColor(0, 0, 0, 1);
 
             gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -680,17 +681,13 @@
 
         updateTexture: function (texture) {
 
-            PhaserMicro.log('updateTexture: ' + texture);
-
-            console.log('al', texture.premultipliedAlpha);
-            console.log('pot', texture._powerOf2);
+            // PhaserMicro.log('updateTexture: ' + texture);
 
             var gl = this.gl;
 
             if (!texture._glTextures[gl.id])
             {
                 texture._glTextures[gl.id] = gl.createTexture();
-                PhaserMicro.log('updateTexture new id: ' + gl.id);
             }
 
             gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
