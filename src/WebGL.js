@@ -144,9 +144,10 @@ PhaserMicro.WebGL.prototype = {
             '}'
         ];
 
-        //  Make this highp for better alpha handling?
+        //  Changed to mediump to avoid crashing older Androids (#2147)
+
         var fragmentSrc = [
-            'precision lowp float;',
+            'precision mediump float;',
             'varying vec2 vTextureCoord;',
             'varying vec4 vColor;',
             'uniform sampler2D uSampler;',
