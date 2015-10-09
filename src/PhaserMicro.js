@@ -64,7 +64,7 @@
             alpha: false,
             antialias: true,
             premultipliedAlpha: false,
-            stencil: true,
+            stencil: false,
             preserveDrawingBuffer: false
         };
 
@@ -72,6 +72,7 @@
         this.offset = { x: 0, y: 0 };
         this.drawCount = 0;
         this.vertSize = 6;
+        this.stride = this.vertSize * 4;
         this.batchSize = 2000;
         this.batchSprites = [];
         this.contextLost = false;
@@ -188,13 +189,11 @@
 
             this.renderWebGL();
 
-            /*
-            if (this.frameCount < 4)
-            {
-                window.requestAnimationFrame(this.update.bind(this));
-                this.frameCount++;
-            }
-            */
+            // if (this.frameCount < 4)
+            // {
+            //     window.requestAnimationFrame(this.update.bind(this));
+            //     this.frameCount++;
+            // }
 
             window.requestAnimationFrame(this.update.bind(this));
 
@@ -338,7 +337,7 @@
                 'void main(void) {',
                 '   gl_Position = vec4( ((aVertexPosition + offsetVector) / projectionVector) + center , 0.0, 1.0);',
                 '   vTextureCoord = aTextureCoord;',
-                '   vec3 color = mod(vec3(aColor.y/65536.0, aColor.y/256.0, aColor.y), 256.0) / 256.0;',
+                '   vec3 color = mod(vec3(aColor.y / 65536.0, aColor.y / 256.0, aColor.y), 256.0) / 256.0;',
                 '   vColor = vec4(color * aColor.x, aColor.x);',
                 '}'
             ];
@@ -419,13 +418,17 @@
 
             var gl = this.gl;
 
-            gl.viewport(0, 0, this.width, this.height);
+            // gl.viewport(0, 0, this.width, this.height);
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-            gl.clearColor(0, 0, 0, 0);
+            //  Transparent
+            // gl.clearColor(0, 0, 0, 0);
 
-            gl.clear (gl.COLOR_BUFFER_BIT);
+            //  Black
+            gl.clearColor(0.5, 0, 0, 1);
+
+            gl.clear(gl.COLOR_BUFFER_BIT);
 
             this.drawCount = 0;
             this.currentBatchSize = 0;
@@ -609,17 +612,14 @@
                 //  set the projection vector (done every loop)
                 gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
 
-                //  Does stride ever change? (doubtful)
-                var stride = this.vertSize * 4;
-
                 //  vertex position
-                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
+                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, this.stride, 0);
 
                 //  texture coordinate
-                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 2 * 4);
+                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, this.stride, 2 * 4);
 
                 //  color attribute
-                gl.vertexAttribPointer(2, 2, gl.FLOAT, false, stride, 4 * 4);
+                gl.vertexAttribPointer(2, 2, gl.FLOAT, false, this.stride, 4 * 4);
             }
 
             //  Upload the verts to the buffer
@@ -635,7 +635,6 @@
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
             }
 
-            // var nextTexture, nextBlendMode, nextShader;
             var nextTexture = null;
             var batchSize = 0;
             var start = 0;
@@ -682,6 +681,9 @@
         updateTexture: function (texture) {
 
             PhaserMicro.log('updateTexture: ' + texture);
+
+            console.log('al', texture.premultipliedAlpha);
+            console.log('pot', texture._powerOf2);
 
             var gl = this.gl;
 

@@ -1,0 +1,43 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Phaser Micro</title>
+    <script src="../src/PhaserMicro.js"></script>
+    <style type="text/css">
+        body {
+            /*background-color: #780F63;*/
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var game = new PhaserMicro.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update });
+
+    function preload () {
+
+        // game.load.image('sky', 'assets/sky2.png');
+        game.load.image('ship', 'assets/bsquadron3.png');
+
+    }
+
+    function create() {
+
+        //  Want the ability to just render images directly without sprites?
+        // game.addChild(0, 0, 'sky');
+
+        game.addChild(300, 400, 'ship');
+        game.addChild(310, 410, 'ship');
+
+    }
+
+    function update() {
+
+    }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Phaser Micro</title>
+    <script src="../src/PhaserMicro.js"></script>
+    <style type="text/css">
+        body {
+            background-color: #780F63;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var game = new PhaserMicro.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update });
+
+    function preload () {
+
+        console.log('Preload');
+
+        game.load.image('atari', 'assets/atari130xe.png');
+
+    }
+
+    var x = 0;
+    var bob1;
+    var bob2;
+    var bob3;
+
+    function create() {
+
+        console.log('Create');
+
+        bob1 = game.addChild(0, 0, 'atari');
+        bob2 = game.addChild(100, 10, 'atari');
+        bob3 = game.addChild(200, 20, 'atari');
+
+    }
+
+    function update() {
+
+
+    }
+
+</script>
+
+</body>
+</html>
