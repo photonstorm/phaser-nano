@@ -38,7 +38,7 @@
         //  WebGL Properties
 
         this.contextOptions = {
-            alpha: true,
+            alpha: false,
             antialias: true,
             premultipliedAlpha: false,
             stencil: true,
@@ -51,6 +51,7 @@
         this.vertSize = 6;
         this.batchSize = 2000;
         this.batchSprites = [];
+        this.contextLost = false;
         this.vertices = new Float32Array(this.batchSize * 4 * this.vertSize);
         this.indices = new Uint16Array(this.batchSize * 6);
         this.lastIndexCount = 0;
@@ -59,6 +60,17 @@
         this.currentBaseTexture = null;
         this.dirty = true;
         this.textures = [];
+        this._UID = 0;
+
+        this.defaultShader = new PhaserMicro.AbstractFilter([
+            'precision lowp float;',
+            'varying vec2 vTextureCoord;',
+            'varying vec4 vColor;',
+            'uniform sampler2D uSampler;',
+            'void main(void) {',
+            '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor ;',
+            '}'
+        ]);
 
         //  Hit it ...
         this.boot();
@@ -112,10 +124,16 @@
             this.canvas.width = this.width;
             this.canvas.height = this.height;
 
-            this.addToDOM();
+            this.contextLostBound = this.handleContextLost.bind(this);
+            this.contextRestoredBound = this.handleContextRestored.bind(this);
+
+            this.canvas.addEventListener('webglcontextlost', this.contextLostBound, false);
+            this.canvas.addEventListener('webglcontextrestored', this.contextRestoredBound, false);
 
             // this.initCanvas();
             this.initWebGL();
+
+            this.addToDOM();
 
             if (this.state.preload)
             {
@@ -158,7 +176,7 @@
 
             this.renderWebGL();
 
-            window.requestAnimationFrame(this.update.bind(this));
+            // window.requestAnimationFrame(this.update.bind(this));
 
         },
 
@@ -196,6 +214,28 @@
 
         },
 
+        handleContextLost: function (event) {
+
+            event.preventDefault();
+            this.contextLost = true;
+
+        },
+
+        handleContextRestored: function () {
+
+            this.initWebGL();
+
+            // empty all the ol gl textures as they are useless now
+            // for(var key in PIXI.TextureCache)
+            // {
+            //     var texture = PIXI.TextureCache[key].baseTexture;
+            //     texture._glTextures = [];
+            // }
+
+            this.contextLost = false;
+
+        },
+
         initWebGL: function () {
 
             var gl = this.canvas.getContext('webgl', this.contextOptions) || this.canvas.getContext('experimental-webgl', this.contextOptions);
@@ -207,7 +247,11 @@
                 throw new Error('Browser does not support WebGL');
             }
 
-            this.glContextId = gl.id;
+            // this.glContextId = gl.id = PIXI.WebGLRenderer.glContextId ++;
+
+            this.glContextId = gl.id = 0;
+
+            console.log('initWebGL', this.glContextId);
 
             gl.disable(gl.DEPTH_TEST);
             gl.disable(gl.CULL_FACE);
@@ -242,14 +286,13 @@
 
             this.currentBlendMode = 99999;
 
-            // var shader = new PIXI.PixiShader(gl);
+            var shader = new PhaserMicro.Shader(gl);
 
-            // shader.fragmentSrc = this.defaultShader.fragmentSrc;
-            // shader.uniforms = {};
-            // shader.init();
+            shader.fragmentSrc = this.defaultShader.fragmentSrc;
+            shader.uniforms = {};
+            shader.init();
 
-            // this.defaultShader.shaders[gl.id] = shader;
-
+            this.defaultShader.shaders[gl.id] = shader;
 
         },
 
@@ -263,6 +306,11 @@
 
         renderWebGL: function () {
 
+            if (this.contextLost)
+            {
+                return;
+            }
+
             var gl = this.gl;
 
             gl.viewport(0, 0, this.width, this.height);
@@ -274,26 +322,101 @@
             gl.clear (gl.COLOR_BUFFER_BIT);
 
             this.drawCount = 0;
-
+            this.currentBatchSize = 0;
             this.batchSprites = [];
+
+            console.log('renderWebGL start');
+
+            this.setShader(this.defaultShader.shaders[gl.id]);
+
+            this.shader = this.defaultShader.shaders[gl.id];
 
             this.dirty = true;
 
             for (var i = 0; i < this.children.length; i++)
             {
+                this.children[i].updateTransform();
                 this.renderSprite(this.children[i]);
             }
+
+            console.log('renderWebGL end');
 
             this.flushBatch();
 
         },
 
+        setShader: function (shader) {
+
+            // this._currentId = shader._UID;
+
+            // this.currentShader = shader;
+
+            this.gl.useProgram(shader.program);
+
+            this.setAttribs(shader.attributes);
+
+            return true;
+
+        },
+
+        setAttribs: function (attribs) {
+
+            // reset temp state
+            var i;
+
+            // for (i = 0; i < this.tempAttribState.length; i++)
+            // {
+            //     this.tempAttribState[i] = false;
+            // }
+
+            // set the new attribs
+
+            // var tempAttribs = [];
+
+            var gl = this.gl;
+
+            for (i = 0; i < attribs.length; i++)
+            {
+                // if (this.tempAttribState[i])
+                // {
+                    gl.enableVertexAttribArray(i);
+                // }
+                // else
+                // {
+                //     gl.disableVertexAttribArray(i);
+                // }
+
+                // var attribId = attribs[i];
+                // tempAttribs[attribId] = true;
+                // this.tempAttribState[attribId] = true;
+            }
+
+
+            //  Original from WebGLShaderManager
+            // for (i = 0; i < this.attribState.length; i++)
+            // {
+            //         if (this.tempAttribState[i])
+            //         {
+            //             gl.enableVertexAttribArray(i);
+            //         }
+            //         else
+            //         {
+            //             gl.disableVertexAttribArray(i);
+            //         }
+            //     }
+            // }
+
+        },
+
         renderSprite: function (sprite) {
+
+            console.log('renderSprite');
 
             var texture = sprite.texture;
             
             if (this.currentBatchSize >= this.batchSize)
             {
+                console.log('flush 1');
                 this.flushBatch();
                 this.currentBaseTexture = texture.baseTexture;
             }
@@ -406,38 +529,27 @@
             verticies[index++] = alpha;
             verticies[index++] = tint;
             
+            console.log('added to batch array');
+
             // increment the batchsize
             this.batchSprites[this.currentBatchSize++] = sprite;
 
         },
-
-        /*
-        renderDisplayObject: function (displayObject, projection, buffer) {
-
-            this.drawCount = 0;
-
-            // this.shader = this.renderSession.shaderManager.defaultShader;
-            // this.spriteBatch.begin(this.renderSession);
-
-            this.dirty = true;
-
-            displayObject._renderWebGL(this.renderSession);
-
-            this.flushBatch();
-
-        },
-        */
 
         flushBatch: function () {
 
             // If the batch is length 0 then return as there is nothing to draw
             if (this.currentBatchSize===0)return;
 
+            console.log('flush');
+
             var gl = this.gl;
-            // var shader;
+            var shader;
 
             if (this.dirty)
             {
+                console.log('flush dirty');
+
                 this.dirty = false;
                 // bind the main texture
                 gl.activeTexture(gl.TEXTURE0);
@@ -446,22 +558,24 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 
-                // shader =  this.defaultShader.shaders[gl.id];
+                shader =  this.defaultShader.shaders[gl.id];
 
                 // this is the same for each shader?
-                // var stride =  this.vertSize * 4;
-                // gl.vertexAttribPointer(shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
-                // gl.vertexAttribPointer(shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
-                // gl.vertexAttribPointer(shader.colorAttribute, 2, gl.FLOAT, false, stride, 4 * 4);
+                var stride =  this.vertSize * 4;
+                gl.vertexAttribPointer(shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
+                gl.vertexAttribPointer(shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
+                gl.vertexAttribPointer(shader.colorAttribute, 2, gl.FLOAT, false, stride, 4 * 4);
             }
 
-            // upload the verts to the buffer  
+            // upload the verts to the buffer
             if (this.currentBatchSize > (this.batchSize * 0.5))
             {
+                console.log('flush verts 1');
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
             }
             else
             {
+                console.log('flush verts 2');
                 var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
             }
@@ -474,10 +588,10 @@
             var currentBaseTexture = null;
             // var currentBlendMode = this.renderSession.blendModeManager.currentBlendMode;
             // var currentBlendMode = 99999;
-            // var currentShader = null;
+            var currentShader = null;
 
             // var blendSwap = false;
-            // var shaderSwap = false;
+            var shaderSwap = false;
             var sprite;
 
             for (var i = 0, j = this.currentBatchSize; i < j; i++)
@@ -486,14 +600,17 @@
 
                 nextTexture = sprite.texture.baseTexture;
                 // nextBlendMode = sprite.blendMode;
-                // nextShader = sprite.shader || this.defaultShader;
+                nextShader = sprite.shader || this.defaultShader;
 
                 // blendSwap = currentBlendMode !== nextBlendMode;
-                // shaderSwap = currentShader !== nextShader; // should I use _UIDS???
+                shaderSwap = currentShader !== nextShader; // should I use _UIDS???
 
                 // if (currentBaseTexture !== nextTexture || blendSwap || shaderSwap)
-                if (currentBaseTexture !== nextTexture)
+                if (currentBaseTexture !== nextTexture || shaderSwap)
+                // if (currentBaseTexture !== nextTexture)
                 {
+                    console.log('texture !== next');
+
                     this.renderBatch(currentBaseTexture, batchSize, start);
 
                     start = i;
@@ -506,41 +623,41 @@
                     //     this.renderSession.blendModeManager.setBlendMode( currentBlendMode );
                     // }
 
-                    /*
-                    if( shaderSwap )
+                    if (shaderSwap)
                     {
+                        console.log('shader !== next');
+
                         currentShader = nextShader;
                         
                         shader = currentShader.shaders[gl.id];
 
-                        if(!shader)
+                        if (!shader)
                         {
-                            shader = new PIXI.PixiShader(gl);
+                            shader = new PhaserMicro.Shader(gl);
 
-                            shader.fragmentSrc =currentShader.fragmentSrc;
-                            shader.uniforms =currentShader.uniforms;
+                            shader.fragmentSrc = currentShader.fragmentSrc;
+                            shader.uniforms = currentShader.uniforms;
                             shader.init();
 
                             currentShader.shaders[gl.id] = shader;
                         }
 
                         // set shader function???
-                        this.renderSession.shaderManager.setShader(shader);
+                        // this.renderSession.shaderManager.setShader(shader);
 
-                        if(shader.dirty)shader.syncUniforms();
+                        if (shader.dirty) shader.syncUniforms();
                         
-                        // both thease only need to be set if they are changing..
+                        // both these only need to be set if they are changing..
                         // set the projection
-                        var projection = this.renderSession.projection;
+                        // var projection = this.renderSession.projection;
+                        var projection = this.projection;
                         gl.uniform2f(shader.projectionVector, projection.x, projection.y);
 
                         // TODO - this is temprorary!
-                        var offsetVector = this.renderSession.offset;
+                        // var offsetVector = this.renderSession.offset;
+                        var offsetVector = this.offset;
                         gl.uniform2f(shader.offsetVector, offsetVector.x, offsetVector.y);
-
-                        // set the pointers
                     }
-                    */
                 }
 
                 batchSize++;
@@ -557,15 +674,19 @@
 
             if(size === 0)return;
 
+            console.log('renderBatch', texture, size, startIndex);
+
             var gl = this.gl;
 
             // check if a texture is dirty (do this when it's loaded to avoid these checks)
             if (texture._dirty[gl.id])
             {
+                console.log('rb updateTexture');
                 this.updateTexture(texture);
             }
             else
             {
+                console.log('rb bind', gl.id);
                 // bind the current texture
                 gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
             }
@@ -580,11 +701,14 @@
 
         updateTexture: function (texture) {
 
+            console.log('updateTexture', texture);
+
             var gl = this.gl;
 
             if (!texture._glTextures[gl.id])
             {
                 texture._glTextures[gl.id] = gl.createTexture();
+                console.log('updateTexture new id', gl.id);
             }
 
             gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
@@ -620,6 +744,8 @@
             sprite.parent = this;
 
             this.children.push(sprite);
+
+            return sprite;
 
         }
 
@@ -1130,74 +1256,78 @@
 
     PhaserMicro.Sprite.prototype.constructor = PhaserMicro.Sprite;
 
-    Object.defineProperty(PhaserMicro.Sprite.prototype, 'width', {
+    Object.defineProperties(PhaserMicro.Sprite.prototype, {
 
-        get: function() {
-            return this.scale.x * this.texture.frame.width;
-        },
+        'width': {
 
-        set: function(value) {
-            this.scale.x = value / this.texture.frame.width;
-            this._width = value;
-        }
+            get: function() {
+                return this.scale.x * this.texture.frame.width;
+            },
 
-    });
-
-    Object.defineProperty(PhaserMicro.Sprite.prototype, 'height', {
-
-        get: function() {
-            return  this.scale.y * this.texture.frame.height;
-        },
-
-        set: function(value) {
-            this.scale.y = value / this.texture.frame.height;
-            this._height = value;
-        }
-
-    });
-
-    Object.defineProperty(PhaserMicro.Sprite.prototype, 'worldVisible', {
-
-        get: function() {
-
-            var item = this;
-
-            do
-            {
-                if (!item.visible)
-                {
-                    return false;
-                }
-
-                item = item.parent;
+            set: function(value) {
+                this.scale.x = value / this.texture.frame.width;
+                this._width = value;
             }
-            while(item);
 
-            return true;
-        }
-
-    });
-
-    Object.defineProperty(PhaserMicro.Sprite.prototype, 'x', {
-
-        get: function() {
-            return this.position.x;
         },
 
-        set: function(value) {
-            this.position.x = value;
-        }
+        'height': {
 
-    });
+            get: function() {
+                return  this.scale.y * this.texture.frame.height;
+            },
 
-    Object.defineProperty(PhaserMicro.Sprite.prototype, 'y', {
+            set: function(value) {
+                this.scale.y = value / this.texture.frame.height;
+                this._height = value;
+            }
 
-        get: function() {
-            return this.position.y;
         },
 
-        set: function(value) {
-            this.position.y = value;
+        'worldVisible': {
+
+            get: function() {
+
+                var item = this;
+
+                do
+                {
+                    if (!item.visible)
+                    {
+                        return false;
+                    }
+
+                    item = item.parent;
+                }
+                while(item);
+
+                return true;
+            }
+
+        },
+
+        'x': {
+
+            get: function() {
+                return this.position.x;
+            },
+
+            set: function(value) {
+                this.position.x = value;
+            }
+
+        },
+
+        'y': {
+
+            get: function() {
+                return this.position.y;
+            },
+
+            set: function(value) {
+                this.position.y = value;
+            }
+
         }
 
     });
@@ -1207,8 +1337,8 @@
         this.baseTexture = baseTexture;
 
         this.frame = { x: 0, y: 0, width: baseTexture.width, height:baseTexture.height };
-        this.width = frame.width;
-        this.height = frame.height;
+        this.width = this.frame.width;
+        this.height = this.frame.height;
 
         // this.noFrame = true;
         // this.valid = true;
@@ -1448,6 +1578,381 @@
     };
 
     PhaserMicro.identityMatrix = new PhaserMicro.Matrix();
+
+    PhaserMicro.Shader = function(gl) {
+
+        this._UID = PhaserMicro._UID++;
+        this.gl = gl;
+        this.program = null;
+
+        this.fragmentSrc = [
+            'precision lowp float;',
+            'varying vec2 vTextureCoord;',
+            'varying vec4 vColor;',
+            'uniform sampler2D uSampler;',
+            'void main(void) {',
+            '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor ;',
+            '}'
+        ];
+
+        this.textureCount = 0;
+        this.firstRun = true;
+        this.dirty = true;
+        this.attributes = [];
+
+        this.init();
+
+    };
+
+    PhaserMicro.Shader.prototype.constructor = PhaserMicro.Shader;
+
+    PhaserMicro.Shader.prototype.init = function() {
+
+        var gl = this.gl;
+
+        var program = PhaserMicro.compileProgram(gl, this.vertexSrc || PhaserMicro.Shader.defaultVertexSrc, this.fragmentSrc);
+
+        gl.useProgram(program);
+
+        // get and store the uniforms for the shader
+        this.uSampler = gl.getUniformLocation(program, 'uSampler');
+        this.projectionVector = gl.getUniformLocation(program, 'projectionVector');
+        this.offsetVector = gl.getUniformLocation(program, 'offsetVector');
+        this.dimensions = gl.getUniformLocation(program, 'dimensions');
+
+        // get and store the attributes
+        this.aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+        this.aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+        this.colorAttribute = gl.getAttribLocation(program, 'aColor');
+
+        this.attributes = [this.aVertexPosition, this.aTextureCoord, this.colorAttribute];
+
+        // add those custom shaders!
+        for (var key in this.uniforms)
+        {
+            // get the uniform locations..
+            this.uniforms[key].uniformLocation = gl.getUniformLocation(program, key);
+        }
+
+        this.initUniforms();
+
+        this.program = program;
+
+    };
+
+    PhaserMicro.Shader.prototype.initUniforms = function() {
+
+        this.textureCount = 1;
+
+        var gl = this.gl;
+        var uniform;
+
+        for (var key in this.uniforms)
+        {
+            uniform = this.uniforms[key];
+
+            var type = uniform.type;
+
+            if (type === 'sampler2D')
+            {
+                uniform._init = false;
+
+                if (uniform.value !== null)
+                {
+                    this.initSampler2D(uniform);
+                }
+            }
+            else if (type === 'mat2' || type === 'mat3' || type === 'mat4')
+            {
+                //  These require special handling
+                uniform.glMatrix = true;
+                uniform.glValueLength = 1;
+
+                if (type === 'mat2')
+                {
+                    uniform.glFunc = gl.uniformMatrix2fv;
+                }
+                else if (type === 'mat3')
+                {
+                    uniform.glFunc = gl.uniformMatrix3fv;
+                }
+                else if (type === 'mat4')
+                {
+                    uniform.glFunc = gl.uniformMatrix4fv;
+                }
+            }
+            else
+            {
+                //  GL function reference
+                uniform.glFunc = gl['uniform' + type];
+
+                if (type === '2f' || type === '2i')
+                {
+                    uniform.glValueLength = 2;
+                }
+                else if (type === '3f' || type === '3i')
+                {
+                    uniform.glValueLength = 3;
+                }
+                else if (type === '4f' || type === '4i')
+                {
+                    uniform.glValueLength = 4;
+                }
+                else
+                {
+                    uniform.glValueLength = 1;
+                }
+            }
+        }
+
+    };
+
+    PhaserMicro.Shader.prototype.initSampler2D = function(uniform) {
+
+        if (!uniform.value || !uniform.value.baseTexture || !uniform.value.baseTexture.hasLoaded)
+        {
+            return;
+        }
+
+        var gl = this.gl;
+
+        gl.activeTexture(gl['TEXTURE' + this.textureCount]);
+        gl.bindTexture(gl.TEXTURE_2D, uniform.value.baseTexture._glTextures[gl.id]);
+
+        //  Extended texture data
+        if (uniform.textureData)
+        {
+            var data = uniform.textureData;
+
+            // GLTexture = mag linear, min linear_mipmap_linear, wrap repeat + gl.generateMipmap(gl.TEXTURE_2D);
+            // GLTextureLinear = mag/min linear, wrap clamp
+            // GLTextureNearestRepeat = mag/min NEAREST, wrap repeat
+            // GLTextureNearest = mag/min nearest, wrap clamp
+            // AudioTexture = whatever + luminance + width 512, height 2, border 0
+            // KeyTexture = whatever + luminance + width 256, height 2, border 0
+
+            //  magFilter can be: gl.LINEAR, gl.LINEAR_MIPMAP_LINEAR or gl.NEAREST
+            //  wrapS/T can be: gl.CLAMP_TO_EDGE or gl.REPEAT
+
+            var magFilter = (data.magFilter) ? data.magFilter : gl.LINEAR;
+            var minFilter = (data.minFilter) ? data.minFilter : gl.LINEAR;
+            var wrapS = (data.wrapS) ? data.wrapS : gl.CLAMP_TO_EDGE;
+            var wrapT = (data.wrapT) ? data.wrapT : gl.CLAMP_TO_EDGE;
+            var format = (data.luminance) ? gl.LUMINANCE : gl.RGBA;
+
+            if (data.repeat)
+            {
+                wrapS = gl.REPEAT;
+                wrapT = gl.REPEAT;
+            }
+
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, !!data.flipY);
+
+            if (data.width)
+            {
+                var width = (data.width) ? data.width : 512;
+                var height = (data.height) ? data.height : 2;
+                var border = (data.border) ? data.border : 0;
+
+                // void texImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, ArrayBufferView? pixels);
+                gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, border, format, gl.UNSIGNED_BYTE, null);
+            }
+            else
+            {
+                //  void texImage2D(GLenum target, GLint level, GLenum internalformat, GLenum format, GLenum type, ImageData? pixels);
+                gl.texImage2D(gl.TEXTURE_2D, 0, format, gl.RGBA, gl.UNSIGNED_BYTE, uniform.value.baseTexture.source);
+            }
+
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
+        }
+
+        gl.uniform1i(uniform.uniformLocation, this.textureCount);
+
+        uniform._init = true;
+
+        this.textureCount++;
+
+    };
+
+    PhaserMicro.Shader.prototype.syncUniforms = function() {
+
+        this.textureCount = 1;
+
+        var uniform;
+        var gl = this.gl;
+
+        //  This would probably be faster in an array and it would guarantee key order
+        for (var key in this.uniforms)
+        {
+            uniform = this.uniforms[key];
+
+            if (uniform.glValueLength === 1)
+            {
+                if (uniform.glMatrix === true)
+                {
+                    uniform.glFunc.call(gl, uniform.uniformLocation, uniform.transpose, uniform.value);
+                }
+                else
+                {
+                    uniform.glFunc.call(gl, uniform.uniformLocation, uniform.value);
+                }
+            }
+            else if (uniform.glValueLength === 2)
+            {
+                uniform.glFunc.call(gl, uniform.uniformLocation, uniform.value.x, uniform.value.y);
+            }
+            else if (uniform.glValueLength === 3)
+            {
+                uniform.glFunc.call(gl, uniform.uniformLocation, uniform.value.x, uniform.value.y, uniform.value.z);
+            }
+            else if (uniform.glValueLength === 4)
+            {
+                uniform.glFunc.call(gl, uniform.uniformLocation, uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w);
+            }
+            else if (uniform.type === 'sampler2D')
+            {
+                if (uniform._init)
+                {
+                    gl.activeTexture(gl['TEXTURE' + this.textureCount]);
+
+                    if(uniform.value.baseTexture._dirty[gl.id])
+                    {
+                        PIXI.instances[gl.id].updateTexture(uniform.value.baseTexture);
+                    }
+                    else
+                    {
+                        // bind the current texture
+                        gl.bindTexture(gl.TEXTURE_2D, uniform.value.baseTexture._glTextures[gl.id]);
+                    }
+
+                 //   gl.bindTexture(gl.TEXTURE_2D, uniform.value.baseTexture._glTextures[gl.id] || PIXI.createWebGLTexture( uniform.value.baseTexture, gl));
+                    gl.uniform1i(uniform.uniformLocation, this.textureCount);
+                    this.textureCount++;
+                }
+                else
+                {
+                    this.initSampler2D(uniform);
+                }
+            }
+        }
+
+    };
+
+    PhaserMicro.Shader.prototype.destroy = function() {
+
+        this.gl.deleteProgram( this.program );
+        this.uniforms = null;
+        this.gl = null;
+
+        this.attributes = null;
+
+    };
+
+    PhaserMicro.Shader.defaultVertexSrc = [
+        'attribute vec2 aVertexPosition;',
+        'attribute vec2 aTextureCoord;',
+        'attribute vec4 aColor;',
+
+        'uniform vec2 projectionVector;',
+        'uniform vec2 offsetVector;',
+
+        'varying vec2 vTextureCoord;',
+        'varying vec4 vColor;',
+
+        'const vec2 center = vec2(-1.0, 1.0);',
+
+        'void main(void) {',
+        '   gl_Position = vec4( ((aVertexPosition + offsetVector) / projectionVector) + center , 0.0, 1.0);',
+        '   vTextureCoord = aTextureCoord;',
+        '   vec3 color = mod(vec3(aColor.y/65536.0, aColor.y/256.0, aColor.y), 256.0) / 256.0;',
+        '   vColor = vec4(color * aColor.x, aColor.x);',
+        '}'
+    ];
+
+    PhaserMicro.AbstractFilter = function (fragmentSrc, uniforms) {
+
+        this.passes = [this];
+        this.shaders = [];
+        this.dirty = true;
+        this.padding = 0;
+        this.uniforms = uniforms || {};
+        this.fragmentSrc = fragmentSrc || [];
+
+    };
+
+    PhaserMicro.AbstractFilter.prototype.constructor = PhaserMicro.AbstractFilter;
+
+    PhaserMicro.AbstractFilter.prototype.syncUniforms = function()
+    {
+        for(var i = 0; i < this.shaders.length; i++)
+        {
+            this.shaders[i].dirty = true;
+        }
+    };
+
+    PhaserMicro.initDefaultShaders = function() {};
+
+    PhaserMicro.CompileVertexShader = function(gl, shaderSrc)
+    {
+        return PhaserMicro._CompileShader(gl, shaderSrc, gl.VERTEX_SHADER);
+    };
+
+    PhaserMicro.CompileFragmentShader = function(gl, shaderSrc)
+    {
+        return PhaserMicro._CompileShader(gl, shaderSrc, gl.FRAGMENT_SHADER);
+    };
+
+    PhaserMicro._CompileShader = function(gl, shaderSrc, shaderType)
+    {
+        var src = shaderSrc.join("\n");
+        var shader = gl.createShader(shaderType);
+        gl.shaderSource(shader, src);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+        {
+            window.console.log(gl.getShaderInfoLog(shader));
+            return null;
+        }
+
+        return shader;
+    };
+
+    PhaserMicro.compileProgram = function(gl, vertexSrc, fragmentSrc)
+    {
+        var fragmentShader = PhaserMicro.CompileFragmentShader(gl, fragmentSrc);
+        var vertexShader = PhaserMicro.CompileVertexShader(gl, vertexSrc);
+
+        var shaderProgram = gl.createProgram();
+
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
+        {
+            window.console.log("Could not initialise shaders");
+        }
+
+        return shaderProgram;
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     if (typeof exports !== 'undefined') {
