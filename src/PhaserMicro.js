@@ -11,9 +11,29 @@
 
     var PhaserMicro = PhaserMicro || {};
 
+    PhaserMicro.showLog = true;
+
+    PhaserMicro.log = function (text, color, bg) {
+
+        if (!PhaserMicro.showLog)
+        {
+            return;
+        }
+
+        if (color === undefined) { color: '#000000'; }
+        if (bg === undefined) { bg: '#ffffff'; }
+
+        text = '%c' + text;
+
+        var style = 'color: ' + color + '; background: ' + bg;
+
+        console.log.apply(console, [text, style]);
+
+    };
+
     PhaserMicro.Game = function (width, height, renderer, parent, state) {
 
-        console.log('/// PhaserMicro v0.1 ///');
+        PhaserMicro.log('/// PhaserMicro v1.0 ///', '#91c6fa', '#0054a6');
 
         this.parent = parent || '';
         this.width = width || 800;
@@ -36,6 +56,9 @@
         this.worldTransform = new PhaserMicro.Matrix();
 
         //  WebGL Properties
+
+        //  limit frames rendered
+        this.frameCount = 0;
 
         this.contextOptions = {
             alpha: false,
@@ -175,6 +198,12 @@
 
             this.renderWebGL();
 
+            if (this.frameCount < 4)
+            {
+                window.requestAnimationFrame(this.update.bind(this));
+                this.frameCount++;
+            }
+
             // window.requestAnimationFrame(this.update.bind(this));
 
         },
@@ -258,7 +287,7 @@
 
             this.glContextId = gl.id = 0;
 
-            console.log('initWebGL', this.glContextId);
+            PhaserMicro.log('initWebGL', this.glContextId);
 
             gl.disable(gl.DEPTH_TEST);
             gl.disable(gl.CULL_FACE);
@@ -324,7 +353,7 @@
             this.currentBatchSize = 0;
             this.batchSprites = [];
 
-            console.log('renderWebGL start');
+            PhaserMicro.log('renderWebGL start', '#ff0000');
 
             this.setShader(this.defaultShader.shaders[gl.id]);
 
@@ -338,7 +367,7 @@
                 this.renderSprite(this.children[i]);
             }
 
-            console.log('renderWebGL end');
+            PhaserMicro.log('renderWebGL end', '#ff0000');
 
             this.flushBatch();
 
@@ -409,13 +438,13 @@
 
         renderSprite: function (sprite) {
 
-            console.log('renderSprite');
+            PhaserMicro.log('renderSprite');
 
             var texture = sprite.texture;
             
             if (this.currentBatchSize >= this.batchSize)
             {
-                console.log('flush 1');
+                PhaserMicro.log('flush 1');
                 this.flushBatch();
                 this.currentBaseTexture = texture.baseTexture;
             }
@@ -532,7 +561,7 @@
             verticies[index++] = alpha;
             verticies[index++] = tint;
             
-            console.log('added to batch array');
+            PhaserMicro.log('added to batch array');
 
             // increment the batchsize
             this.batchSprites[this.currentBatchSize++] = sprite;
@@ -544,14 +573,14 @@
             // If the batch is length 0 then return as there is nothing to draw
             if (this.currentBatchSize===0)return;
 
-            console.log('flush');
+            PhaserMicro.log('flush');
 
             var gl = this.gl;
             var shader;
 
             if (this.dirty)
             {
-                console.log('flush dirty');
+                PhaserMicro.log('flush dirty');
 
                 this.dirty = false;
                 // bind the main texture
@@ -562,6 +591,7 @@
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 
                 shader =  this.defaultShader.shaders[gl.id];
+                gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
 
                 // this is the same for each shader?
                 var stride =  this.vertSize * 4;
@@ -573,12 +603,12 @@
             // upload the verts to the buffer
             if (this.currentBatchSize > (this.batchSize * 0.5))
             {
-                console.log('flush verts 1');
+                PhaserMicro.log('flush verts 1');
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
             }
             else
             {
-                console.log('flush verts 2');
+                PhaserMicro.log('flush verts 2');
                 var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
             }
@@ -591,14 +621,21 @@
             var currentBaseTexture = null;
             // var currentBlendMode = this.renderSession.blendModeManager.currentBlendMode;
             // var currentBlendMode = 99999;
-            var currentShader = null;
+            // var currentShader = null;
 
             // var blendSwap = false;
-            var shaderSwap = false;
+            // var shaderSwap = false;
             var sprite;
 
             //  Let's see if we can bind the default shader
             //  to the world sprite
+
+            // currentShader = nextShader;
+            
+            // shader = this.defaultShader.shaders[gl.id];
+            // gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
+            // gl.uniform2f(shader.offsetVector, this.offset.x, this.offset.y);
+
 
             for (var i = 0, j = this.currentBatchSize; i < j; i++)
             {
@@ -606,16 +643,16 @@
 
                 nextTexture = sprite.texture.baseTexture;
                 // nextBlendMode = sprite.blendMode;
-                nextShader = sprite.shader || this.defaultShader;
+                // nextShader = sprite.shader || this.defaultShader;
 
                 // blendSwap = currentBlendMode !== nextBlendMode;
-                shaderSwap = currentShader !== nextShader; // should I use _UIDS???
+                // shaderSwap = currentShader !== nextShader; // should I use _UIDS???
 
                 // if (currentBaseTexture !== nextTexture || blendSwap || shaderSwap)
-                if (currentBaseTexture !== nextTexture || shaderSwap)
-                // if (currentBaseTexture !== nextTexture)
+                // if (currentBaseTexture !== nextTexture || shaderSwap)
+                if (currentBaseTexture !== nextTexture)
                 {
-                    console.log('texture !== next');
+                    PhaserMicro.log('texture !== next');
 
                     if (batchSize > 0)
                     {
@@ -623,8 +660,6 @@
                         gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
                         this.drawCount++;
                     }
-
-                    // this.renderBatch(currentBaseTexture, batchSize, start);
 
                     start = i;
                     batchSize = 0;
@@ -636,6 +671,7 @@
                     //     this.renderSession.blendModeManager.setBlendMode( currentBlendMode );
                     // }
 
+                    /*
                     if (shaderSwap)
                     {
                         console.log('shader !== next');
@@ -661,22 +697,15 @@
 
                         // if (shader.dirty) shader.syncUniforms();
                         
-                        // both these only need to be set if they are changing..
                         // set the projection
-                        // var projection = this.renderSession.projection;
-                        // var projection = this.projection;
                         gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
-
-                        // var offsetVector = this.renderSession.offset;
-                        // var offsetVector = this.offset;
                         gl.uniform2f(shader.offsetVector, this.offset.x, this.offset.y);
                     }
+                    */
                 }
 
                 batchSize++;
             }
-
-            // this.renderBatch(currentBaseTexture, batchSize, start);
 
             if (batchSize > 0)
             {
@@ -690,6 +719,7 @@
 
         },
 
+        /*
         renderBatch: function (texture, size, startIndex) {
 
             if(size === 0)return;
@@ -718,17 +748,18 @@
             this.drawCount++;
 
         },
+        */
 
         updateTexture: function (texture) {
 
-            console.log('updateTexture', texture);
+            PhaserMicro.log('updateTexture', texture);
 
             var gl = this.gl;
 
             if (!texture._glTextures[gl.id])
             {
                 texture._glTextures[gl.id] = gl.createTexture();
-                console.log('updateTexture new id', gl.id);
+                PhaserMicro.log('updateTexture new id', gl.id);
             }
 
             gl.bindTexture(gl.TEXTURE_2D, texture._glTextures[gl.id]);
@@ -951,12 +982,12 @@
 
                     if (file.error)
                     {
-                        console.log('File loading error', file.key);
+                        PhaserMicro.log('File loading error' + file.key);
                         // this.onFileError.dispatch(file.key, file);
                     }
 
                     this._loadedFileCount++;
-                    console.log('File Complete', file.key);
+                    PhaserMicro.log('File Complete ' + file.key);
                     // this.onFileComplete.dispatch(this.progress, file.key, !file.error, this._loadedFileCount, this._totalFileCount);
                 }
             }
@@ -1145,7 +1176,7 @@
 
             this.reset();
 
-            console.log('Load Complete');
+            PhaserMicro.log('Load Complete');
 
             this.game.start();
 
@@ -1934,7 +1965,6 @@
 
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
         {
-            window.console.log(gl.getShaderInfoLog(shader));
             return null;
         }
 
@@ -1954,7 +1984,7 @@
 
         if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
         {
-            window.console.log("Could not initialise shaders");
+            PhaserMicro.log("Could not initialise shaders");
         }
 
         return shaderProgram;
