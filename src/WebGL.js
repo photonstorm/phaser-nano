@@ -174,6 +174,11 @@ PhaserMicro.WebGL.prototype = {
             //  Set Shader
             gl.useProgram(program);
 
+            //  Get and store the attributes
+            this.aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+            this.aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+            this.colorAttribute = gl.getAttribLocation(program, 'aColor');
+
             //  vertex position
             gl.enableVertexAttribArray(0);
 
@@ -468,13 +473,13 @@ PhaserMicro.WebGL.prototype = {
             gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
 
             //  vertex position
-            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, this.stride, 0);
+            gl.vertexAttribPointer(this.aVertexPosition, 2, gl.FLOAT, false, this.stride, 0);
 
             //  texture coordinate
-            gl.vertexAttribPointer(1, 2, gl.FLOAT, false, this.stride, 2 * 4);
+            gl.vertexAttribPointer(this.aTextureCoord, 2, gl.FLOAT, false, this.stride, 2 * 4);
 
             //  color attribute
-            gl.vertexAttribPointer(2, 2, gl.FLOAT, false, this.stride, 4 * 4);
+            gl.vertexAttribPointer(this.colorAttribute, 2, gl.FLOAT, false, this.stride, 4 * 4);
         }
 
         //  Upload the verts to the buffer
