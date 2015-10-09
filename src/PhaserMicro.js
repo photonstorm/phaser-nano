@@ -90,6 +90,11 @@
 
     };
 
+    PhaserMicro.BLEND_NORMAL = 0;
+    PhaserMicro.BLEND_ADD = 1;
+    PhaserMicro.BLEND_MULTIPLY = 2;
+    PhaserMicro.BLEND_SCREEN = 3;
+
     PhaserMicro.Game.prototype = {
 
         boot: function () {
@@ -309,8 +314,6 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.DYNAMIC_DRAW);
 
-            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
             this.initShader();
 
         },
@@ -422,7 +425,6 @@
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-
             //  Transparent
             // gl.clearColor(0, 0, 0, 0);
 
@@ -438,6 +440,8 @@
             // PhaserMicro.log('renderWebGL start', '#ff0000');
 
             this.dirty = true;
+
+            // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
             for (var i = 0; i < this.children.length; i++)
             {
@@ -637,9 +641,11 @@
             }
 
             var nextTexture = null;
+            var nextBlendMode = null;
             var batchSize = 0;
             var start = 0;
             var currentBaseTexture = null;
+            var currentBlendMode = -1;
             var sprite;
 
             for (var i = 0, j = this.currentBatchSize; i < j; i++)
@@ -647,6 +653,27 @@
                 sprite = this.batchSprites[i];
 
                 nextTexture = sprite.texture.baseTexture;
+                nextBlendMode = sprite.blendMode;
+
+                if (currentBlendMode !== nextBlendMode)
+                {
+                    if (nextBlendMode === PhaserMicro.BLEND_NORMAL)
+                    {
+                        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                    }
+                    else if (nextBlendMode === PhaserMicro.BLEND_ADD)
+                    {
+                        gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
+                    }
+                    else if (nextBlendMode === PhaserMicro.BLEND_MULTIPLY)
+                    {
+                        gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
+                    }
+                    else if (nextBlendMode === PhaserMicro.BLEND_SCREEN)
+                    {
+                        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+                    }
+                }
 
                 if (currentBaseTexture !== nextTexture)
                 {
@@ -1138,6 +1165,8 @@
         this.worldTransform = new PhaserMicro.Matrix();
 
         this.tint = 0xffffff;
+
+        this.blendMode = PhaserMicro.BLEND_NORMAL;
 
         var base = game.cache.getBaseTexture(key);
 
