@@ -38,6 +38,9 @@ PhaserMicro.Sprite = function (game, x, y, key) {
 
     this._width = this.texture.width;
     this._height = this.texture.height;
+    this._rot = 0;
+    this._sr = 0;
+    this._cr = 1;
 
 };
 
@@ -45,59 +48,56 @@ PhaserMicro.Sprite.prototype = {
 
     updateTransform: function() {
 
-        // create some matrix refs for easy access
+        //  Create matrix refs for easy access
         var pt = this.parent.worldTransform;
         var wt = this.worldTransform;
 
-        // temporary matrix variables
-        var a, b, c, d, tx, ty;
+        var a = this.scale.x;
+        var d = this.scale.y;
 
-        /*
-        // so if rotation is between 0 then we can simplify the multiplication process..
-        if(this.rotation % PIXI.PI_2)
+        var tx = this.position.x - this.pivot.x * a;
+        var ty = this.position.y - this.pivot.y * d;
+
+        //  If rotation !== 0
+        if (this.rotation % PhaserMicro.PI_2)
         {
-            // check to see if the rotation is the same as the previous render. This means we only need to use sin and cos when rotation actually changes
-            if(this.rotation !== this.rotationCache)
+            //  Check to see if the rotation is the same as the previous render.
+            //  This means we only need to use sin and cos when rotation actually changes
+            if (this.rotation !== this._rot)
             {
-                this.rotationCache = this.rotation;
+                this._rot = this.rotation;
                 this._sr = Math.sin(this.rotation);
                 this._cr = Math.cos(this.rotation);
             }
 
-            // get the matrix values of the displayobject based on its transform properties..
-            a  =  this._cr * this.scale.x;
-            b  =  this._sr * this.scale.x;
-            c  = -this._sr * this.scale.y;
-            d  =  this._cr * this.scale.y;
+            //  Get the matrix values of the sprite based on its transform properties
+
+            // a  =  this._cr * this.scale.x;
+            a *=  this._cr;
+            var b  =  this._sr * this.scale.x;
+            var c  = -this._sr * this.scale.y;
+            // d  =  this._cr * this.scale.y;
+            d  *=  this._cr;
             tx =  this.position.x;
             ty =  this.position.y;
             
-            // check for pivot.. not often used so geared towards that fact!
-            if(this.pivot.x || this.pivot.y)
+            //  Check for pivot.. not often used so geared towards that fact!
+            if (this.pivot.x || this.pivot.y)
             {
                 tx -= this.pivot.x * a + this.pivot.y * c;
                 ty -= this.pivot.x * b + this.pivot.y * d;
             }
 
-            // concat the parent matrix with the objects transform.
+            //  Concat the parent matrix with the objects transform
             wt.a  = a  * pt.a + b  * pt.c;
             wt.b  = a  * pt.b + b  * pt.d;
             wt.c  = c  * pt.a + d  * pt.c;
             wt.d  = c  * pt.b + d  * pt.d;
             wt.tx = tx * pt.a + ty * pt.c + pt.tx;
             wt.ty = tx * pt.b + ty * pt.d + pt.ty;
-
-            
         }
         else
         {
-            // lets do the fast version as we know there is no rotation..
-            a  = this.scale.x;
-            d  = this.scale.y;
-
-            tx = this.position.x - this.pivot.x * a;
-            ty = this.position.y - this.pivot.y * d;
-
             wt.a  = a  * pt.a;
             wt.b  = a  * pt.b;
             wt.c  = d  * pt.c;
@@ -105,20 +105,6 @@ PhaserMicro.Sprite.prototype = {
             wt.tx = tx * pt.a + ty * pt.c + pt.tx;
             wt.ty = tx * pt.b + ty * pt.d + pt.ty;
         }
-        */
-
-        a  = this.scale.x;
-        d  = this.scale.y;
-
-        tx = this.position.x - this.pivot.x * a;
-        ty = this.position.y - this.pivot.y * d;
-
-        wt.a  = a  * pt.a;
-        wt.b  = a  * pt.b;
-        wt.c  = d  * pt.c;
-        wt.d  = d  * pt.d;
-        wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-        wt.ty = tx * pt.b + ty * pt.d + pt.ty;
 
         this.worldAlpha = this.alpha * this.parent.worldAlpha;
 

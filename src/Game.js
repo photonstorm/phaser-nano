@@ -6,6 +6,20 @@
 
 var PhaserMicro = PhaserMicro || {};
 
+PhaserMicro.VERSION = '1.0.0';
+
+PhaserMicro.BLEND_NORMAL = 0;
+PhaserMicro.BLEND_ADD = 1;
+PhaserMicro.BLEND_MULTIPLY = 2;
+PhaserMicro.BLEND_SCREEN = 3;
+
+PhaserMicro.LINEAR = 0;
+PhaserMicro.NEAREST = 1;
+
+PhaserMicro.PI_2 = Math.PI * 2;
+PhaserMicro.RAD_TO_DEG = 180 / Math.PI;
+PhaserMicro.DEG_TO_RAD = Math.PI / 180;
+
 PhaserMicro.showLog = true;
 
 PhaserMicro.log = function (text, color, bg) {
@@ -55,14 +69,6 @@ PhaserMicro.Game = function (width, height, renderer, parent, state) {
     this.boot();
 
 };
-
-PhaserMicro.BLEND_NORMAL = 0;
-PhaserMicro.BLEND_ADD = 1;
-PhaserMicro.BLEND_MULTIPLY = 2;
-PhaserMicro.BLEND_SCREEN = 3;
-
-PhaserMicro.LINEAR = 0;
-PhaserMicro.NEAREST = 1;
 
 PhaserMicro.Game.prototype = {
 
