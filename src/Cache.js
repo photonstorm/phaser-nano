@@ -1,3 +1,9 @@
+/**
+* @author       Richard Davey @photonstorm
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
 PhaserMicro.Cache = function (game) {
 
     this.game = game;
@@ -28,7 +34,7 @@ PhaserMicro.Cache.prototype = {
 
     },
 
-    getBaseTexture: function (key) {
+    getTexture: function (key) {
 
         return this._cache.image[key].base;
 

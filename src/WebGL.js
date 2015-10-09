@@ -1,3 +1,10 @@
+/**
+* @author       Richard Davey @photonstorm
+* @author       Mat Groves @Doormat23
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
 PhaserMicro.WebGL = function (game) {
 
     this.game = game;
@@ -220,10 +227,18 @@ PhaserMicro.WebGL.prototype = {
 
         this.dirty = true;
 
+        var sprite;
+
         for (var i = 0; i < this.game.children.length; i++)
         {
-            this.game.children[i].updateTransform();
-            this.renderSprite(this.game.children[i]);
+            sprite = this.game.children[i];
+
+            sprite.updateTransform();
+
+            if (sprite.visible && sprite.worldAlpha > 0)
+            {
+                this.renderSprite(sprite);
+            }
         }
 
         // PhaserMicro.log('renderWebGL end', '#ff0000');
@@ -249,34 +264,23 @@ PhaserMicro.WebGL.prototype = {
 
         var uvs = texture._uvs;
 
-        // if the uvs have not updated then no point rendering just yet!
-        // if(!uvs)return;
-
         // get the sprites current alpha
-        // var alpha = sprite.worldAlpha;
-        // var tint = sprite.tint;
-
-        var alpha = 1;
-        var tint = 0xffffff;
+        var alpha = sprite.worldAlpha;
+        var tint = sprite.tint;
 
         var verticies = this.vertices;
 
         //  anchor
-        var aX = 0;
-        var aY = 0;
+        var aX = sprite.anchor.x;
+        var aY = sprite.anchor.y;
 
-        var w0 = (texture.frame.width) * ( 1 - aX);
+        var w0 = (texture.frame.width) * (1 - aX);
         var w1 = (texture.frame.width) * -aX;
 
         var h0 = texture.frame.height * (1 - aY);
         var h1 = texture.frame.height * -aY;
 
         /*
-        var aX = sprite.anchor.x;
-        var aY = sprite.anchor.y;
-
-        var w0, w1, h0, h1;
-            
         if (texture.trim)
         {
             // if the sprite is trimmed then we need to add the extra space before transforming the sprite coords..
@@ -301,15 +305,12 @@ PhaserMicro.WebGL.prototype = {
 
         var index = this.currentBatchSize * 4 * this.vertSize;
         
-        // var resolution = texture.baseTexture.resolution;
-        var resolution = 1;
-
         var worldTransform = sprite.worldTransform;
 
-        var a = worldTransform.a / resolution;
-        var b = worldTransform.b / resolution;
-        var c = worldTransform.c / resolution;
-        var d = worldTransform.d / resolution;
+        var a = worldTransform.a;
+        var b = worldTransform.b;
+        var c = worldTransform.c;
+        var d = worldTransform.d;
         var tx = worldTransform.tx;
         var ty = worldTransform.ty;
 
@@ -372,7 +373,7 @@ PhaserMicro.WebGL.prototype = {
             return;
         }
 
-        // PhaserMicro.log('flush');
+        PhaserMicro.log('flush');
 
         var gl = this.gl;
 
@@ -380,7 +381,7 @@ PhaserMicro.WebGL.prototype = {
         {
             //  Always dirty the first pass through
             //  but subsequent calls may be clean
-            // PhaserMicro.log('flush dirty');
+            PhaserMicro.log('flush dirty');
 
             this.dirty = false;
 
@@ -421,7 +422,7 @@ PhaserMicro.WebGL.prototype = {
         var nextBlendMode = null;
         var batchSize = 0;
         var start = 0;
-        var currentBaseTexture = null;
+        var currentBaseTexture = { source: null };
         var currentBlendMode = -1;
         var sprite;
 
@@ -452,12 +453,13 @@ PhaserMicro.WebGL.prototype = {
                 }
             }
 
-            if (currentBaseTexture !== nextTexture)
+            if (currentBaseTexture.source !== nextTexture.source)
             {
-                // PhaserMicro.log('texture !== next');
+                PhaserMicro.log('texture !== next');
 
                 if (batchSize > 0)
                 {
+                    console.log('draw1', batchSize);
                     gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
                     gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
                     this.drawCount++;
@@ -473,6 +475,7 @@ PhaserMicro.WebGL.prototype = {
 
         if (batchSize > 0)
         {
+            console.log('draw2', batchSize);
             gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
             gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
             this.drawCount++;
@@ -480,6 +483,24 @@ PhaserMicro.WebGL.prototype = {
 
         // then reset the batch!
         this.currentBatchSize = 0;
+
+    },
+
+    unloadTexture: function (base) {
+
+        for (var i = base._glTextures.length - 1; i >= 0; i--)
+        {
+            var glTexture = base._glTextures[i];
+
+            if (this.gl && glTexture)
+            {
+                this.gl.deleteTexture(glTexture);
+            }
+        }
+
+        base._glTextures.length = 0;
+
+        base.dirty();
 
     },
 

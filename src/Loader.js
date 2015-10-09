@@ -1,3 +1,9 @@
+/**
+* @author       Richard Davey @photonstorm
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
 PhaserMicro.Loader = function (game) {
 
     this.game = game;

@@ -30,8 +30,13 @@
         //  Want the ability to just render images directly without sprites?
         game.addChild(0, 0, 'sky');
 
-        game.addChild(300, 400, 'ship');
-        game.addChild(310, 410, 'ship');
+        for (var i = 0; i < 100; i++)
+        {
+            var x = Math.random() * game.width;
+            var y = Math.random() * game.height;
+
+            game.addChild(x, y, 'ship');
+        }
 
     }
 

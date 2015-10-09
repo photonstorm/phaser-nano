@@ -1,3 +1,10 @@
+/**
+* @author       Richard Davey @photonstorm
+* @author       Mat Groves @Doormat23
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
 PhaserMicro.Texture = function (baseTexture) {
 
     this.baseTexture = baseTexture;
@@ -6,18 +13,17 @@ PhaserMicro.Texture = function (baseTexture) {
     this.width = this.frame.width;
     this.height = this.frame.height;
 
-    // this.noFrame = true;
-    // this.valid = true;
     this.requiresUpdate = false;
+
     this._uvs = { x0: 0, y0: 0, x1: 0, y1: 0, x2: 0, y2: 0, x3: 0, y3: 0 };
 
-    this._updateUvs();
+    this.updateUVs();
 
 };
 
 PhaserMicro.Texture.prototype = {
 
-    _updateUvs: function () {
+    updateUVs: function () {
 
         //  Swap for 'this.crop' once we add atlas support back in
         var frame = this.frame;
@@ -45,10 +51,12 @@ PhaserMicro.BaseTexture = function (source) {
     this.width = source.width;
     this.height = source.height;
     this.source = source;
+
     this.premultipliedAlpha = true;
+
     this._glTextures = [];
-    this._dirty = [true, true, true, true];
     this._powerOf2 = false;
+    this._dirty = [true, true, true, true];
 
 };
 
@@ -60,25 +68,6 @@ PhaserMicro.BaseTexture.prototype = {
         {
             this._dirty[i] = true;
         }
-
-    },
-
-    unloadFromGPU: function () {
-
-        for (var i = this._glTextures.length - 1; i >= 0; i--)
-        {
-            var glTexture = this._glTextures[i];
-            // var gl = PIXI.glContexts[i];
-
-            if (this.gl && glTexture)
-            {
-                this.gl.deleteTexture(glTexture);
-            }
-        }
-
-        this._glTextures.length = 0;
-
-        this.dirty();
 
     }
 

@@ -1,6 +1,5 @@
 /**
 * @author       Richard Davey @photonstorm
-* @author       Mat Groves @Doormat23
 * @copyright    2015 Photon Storm Ltd.
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
@@ -154,13 +153,13 @@ PhaserMicro.Game.prototype = {
 
         this.renderer.render();
 
-        // if (this.frameCount < 4)
-        // {
-        //     window.requestAnimationFrame(this.update.bind(this));
-        //     this.frameCount++;
-        // }
+        if (this.frameCount < 1)
+        {
+            window.requestAnimationFrame(this.update.bind(this));
+            this.frameCount++;
+        }
 
-        window.requestAnimationFrame(this.update.bind(this));
+        // window.requestAnimationFrame(this.update.bind(this));
 
     },
 

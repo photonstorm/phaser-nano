@@ -1,3 +1,10 @@
+/**
+* @author       Richard Davey @photonstorm
+* @author       Mat Groves @Doormat23
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
 PhaserMicro.Sprite = function (game, x, y, key) {
 
     this.game = game;
@@ -27,12 +34,10 @@ PhaserMicro.Sprite = function (game, x, y, key) {
 
     this.blendMode = PhaserMicro.BLEND_NORMAL;
 
-    var base = game.cache.getBaseTexture(key);
+    this.texture = new PhaserMicro.Texture(game.cache.getTexture(key));
 
-    this.texture = new PhaserMicro.Texture(base);
-
-    this._width = base.width;
-    this._height = base.height;
+    this._width = this.texture.width;
+    this._height = this.texture.height;
 
 };
 
