@@ -15,13 +15,33 @@ module.exports = function (grunt) {
 
         },
 
+        concat: {
+
+            micro: {
+                src: [
+                    'src/Intro.js',
+                    'src/Game.js',
+                    'src/WebGL.js',
+                    'src/Canvas.js',
+                    'src/Loader.js',
+                    'src/Cache.js',
+                    'src/Texture.js',
+                    'src/Sprite.js',
+                    'src/Matrix.js',
+                    'src/Outro.js'
+                ],
+                dest: 'dist/phaser-micro.js'
+            }
+
+        },
+
         uglify: {
 
             micro: {
                 options: {
                     banner: '/* Phaser-Micro v1.0.0 (C) Copyright 2015 Photon Storm Ltd. */\n'
                 },
-                src: ['src/PhaserMicro.js'],
+                src: ['dist/phaser-micro.js'],
                 dest: 'dist/phaser-micro.min.js'
             }
 
@@ -57,6 +77,6 @@ module.exports = function (grunt) {
 
     });
 
-    grunt.registerTask('default', ['clean', 'uglify:micro']);
+    grunt.registerTask('default', ['clean', 'concat:micro', 'uglify:micro']);
 
 };
