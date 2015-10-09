@@ -16,6 +16,7 @@ PhaserMicro.Matrix = function() {
 
 };
 
+/*
 PhaserMicro.Matrix.prototype = {
 
     fromArray: function (array) {
@@ -165,3 +166,6 @@ PhaserMicro.Matrix.prototype = {
 };
 
 PhaserMicro.identityMatrix = new PhaserMicro.Matrix();
+
+*/
+

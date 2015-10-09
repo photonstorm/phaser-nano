@@ -25,26 +25,34 @@ PhaserMicro.WebGL = function (game) {
         preserveDrawingBuffer: false
     };
 
+    //  Temporary - will move to a World container
     this.worldAlpha = 1;
     this.worldTransform = new PhaserMicro.Matrix();
 
-    this.projection = { x: 0, y: 0 };
-    this.offset = { x: 0, y: 0 };
-    this.drawCount = 0;
-    this.vertSize = 6;
-    this.stride = this.vertSize * 4;
-    this.batchSize = 2000;
-    this.batchSprites = [];
     this.contextLost = false;
+
+    this.projection = { x: 0, y: 0 };
+
+    this.vertSize = 6;
+    this.batchSize = 2000;
+
+    this.stride = this.vertSize * 4;
+
     this.vertices = new Float32Array(this.batchSize * 4 * this.vertSize);
     this.indices = new Uint16Array(this.batchSize * 6);
-    this.lastIndexCount = 0;
-    this.drawing = false;
-    this.currentBatchSize = 0;
-    this.currentBaseTexture = null;
+
+    this._size = 0;
+    this._batch = [];
+    this._base = null;
+
     this.dirty = true;
-    this.textures = [];
-    this._UID = 0;
+
+    // this.lastIndexCount = 0;
+    // this.drawCount = 0;
+    // this.drawing = false;
+    // this.offset = { x: 0, y: 0 };
+    // this.textures = [];
+    // this._UID = 0;
 
 };
 
@@ -112,6 +120,10 @@ PhaserMicro.WebGL.prototype = {
 
         var gl = this.gl;
 
+        //  We could have the projectionVector as a const instead
+        //  'const vec2 projectionVector = vec2(400.0, -300.0);',
+        //  but it assumes the game size never changes. Would avoid a single uniform though.
+
         var vertexSrc = [
             'attribute vec2 aVertexPosition;',
             'attribute vec2 aTextureCoord;',
@@ -132,13 +144,14 @@ PhaserMicro.WebGL.prototype = {
             '}'
         ];
 
+        //  Make this highp for better alpha handling?
         var fragmentSrc = [
             'precision lowp float;',
             'varying vec2 vTextureCoord;',
             'varying vec4 vColor;',
             'uniform sampler2D uSampler;',
             'void main(void) {',
-            '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor ;',
+            '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor;',
             '}'
         ];
 
@@ -169,13 +182,15 @@ PhaserMicro.WebGL.prototype = {
             //  color attribute
             gl.enableVertexAttribArray(2);
 
-            //  Shader uniforms
-            this.uSampler = gl.getUniformLocation(program, 'uSampler');
+            //  The projection vector (middle of the game world)
             this.projectionVector = gl.getUniformLocation(program, 'projectionVector');
-            // this.offsetVector = gl.getUniformLocation(program, 'offsetVector');
-            this.dimensions = gl.getUniformLocation(program, 'dimensions');
 
-            this.program = program;
+            //  Un-used Shader uniforms
+            // this.uSampler = gl.getUniformLocation(program, 'uSampler');
+            // this.dimensions = gl.getUniformLocation(program, 'dimensions');
+
+            //  Shader reference - not needed globally atm, leave commented for now
+            // this.program = program;
 
             return true;
         }
@@ -218,9 +233,8 @@ PhaserMicro.WebGL.prototype = {
 
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        this.drawCount = 0;
-        this.currentBatchSize = 0;
-        this.batchSprites = [];
+        this._size = 0;
+        this._batch = [];
 
         // PhaserMicro.log('renderWebGL start', '#ff0000');
 
@@ -242,7 +256,7 @@ PhaserMicro.WebGL.prototype = {
 
         // PhaserMicro.log('renderWebGL end', '#ff0000');
 
-        this.flushBatch();
+        this.flush();
 
     },
 
@@ -252,24 +266,17 @@ PhaserMicro.WebGL.prototype = {
 
         var texture = sprite.texture;
         
-        if (this.currentBatchSize >= this.batchSize)
+        if (this._size >= this.batchSize)
         {
             // PhaserMicro.log('flush 1');
-            this.flushBatch();
-            this.currentBaseTexture = texture.baseTexture;
+            this.flush();
+            this._base = texture.baseTexture;
         }
 
-        // get the uvs for the texture
-
         var uvs = texture._uvs;
-
-        // get the sprites current alpha
         var alpha = sprite.worldAlpha;
         var tint = sprite.tint;
 
-        var verticies = this.vertices;
-
-        //  anchor
         var aX = sprite.anchor.x;
         var aY = sprite.anchor.y;
 
@@ -302,71 +309,60 @@ PhaserMicro.WebGL.prototype = {
         }
         */
 
-        var index = this.currentBatchSize * 4 * this.vertSize;
-        
-        var worldTransform = sprite.worldTransform;
+        var wt = sprite.worldTransform;
 
-        var a = worldTransform.a;
-        var b = worldTransform.b;
-        var c = worldTransform.c;
-        var d = worldTransform.d;
-        var tx = worldTransform.tx;
-        var ty = worldTransform.ty;
+        var a = wt.a;
+        var b = wt.b;
+        var c = wt.c;
+        var d = wt.d;
+        var tx = wt.tx;
+        var ty = wt.ty;
 
-        //  Top Left vert
-        // xy
-        verticies[index++] = a * w1 + c * h1 + tx;
-        verticies[index++] = d * h1 + b * w1 + ty;
-        // uv
-        verticies[index++] = uvs.x0;
-        verticies[index++] = uvs.y0;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        var verts = this.vertices;
+        var i = this._size * 4 * this.vertSize;
 
-        //  Top Right vert
-        // xy
-        verticies[index++] = a * w0 + c * h1 + tx;
-        verticies[index++] = d * h1 + b * w0 + ty;
-        // uv
-        verticies[index++] = uvs.x1;
-        verticies[index++] = uvs.y1;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        //  Top Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w1 + ty;
+        verts[i++] = uvs.x0;
+        verts[i++] = uvs.y0;
+        verts[i++] = alpha;
+        verts[i++] = tint;
 
-        //  Bottom Right vert
-        // xy
-        verticies[index++] = a * w0 + c * h0 + tx;
-        verticies[index++] = d * h0 + b * w0 + ty;
-        // uv
-        verticies[index++] = uvs.x2;
-        verticies[index++] = uvs.y2;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        //  Top Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w0 + ty;
+        verts[i++] = uvs.x1;
+        verts[i++] = uvs.y1;
+        verts[i++] = alpha;
+        verts[i++] = tint;
 
-        //  Bottom Left vert
-        // xy
-        verticies[index++] = a * w1 + c * h0 + tx;
-        verticies[index++] = d * h0 + b * w1 + ty;
-        // uv
-        verticies[index++] = uvs.x3;
-        verticies[index++] = uvs.y3;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        //  Bottom Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w0 + ty;
+        verts[i++] = uvs.x2;
+        verts[i++] = uvs.y2;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Bottom Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w1 + ty;
+        verts[i++] = uvs.x3;
+        verts[i++] = uvs.y3;
+        verts[i++] = alpha;
+        verts[i++] = tint;
         
         // PhaserMicro.log('added to batch array');
 
         // increment the batchsize
-        this.batchSprites[this.currentBatchSize++] = sprite;
+        this._batch[this._size++] = sprite;
 
     },
 
-    flushBatch: function () {
+    flush: function () {
 
-        if (this.currentBatchSize === 0)
+        if (this._size === 0)
         {
             //  Nothing more to draw
             return;
@@ -391,7 +387,7 @@ PhaserMicro.WebGL.prototype = {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 
-            //  set the projection vector (done every loop)
+            //  set the projection vector (defaults to middle of game world on negative y)
             gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
 
             //  vertex position
@@ -405,7 +401,7 @@ PhaserMicro.WebGL.prototype = {
         }
 
         //  Upload the verts to the buffer
-        if (this.currentBatchSize > (this.batchSize * 0.5))
+        if (this._size > (this.batchSize * 0.5))
         {
             // PhaserMicro.log('flush verts 1');
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
@@ -413,75 +409,77 @@ PhaserMicro.WebGL.prototype = {
         else
         {
             // PhaserMicro.log('flush verts 2');
-            var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
+            var view = this.vertices.subarray(0, this._size * 4 * this.vertSize);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
         }
 
-        var nextTexture = null;
-        var nextBlendMode = null;
-        var batchSize = 0;
         var start = 0;
-        var currentBaseTexture = { source: null };
-        var currentBlendMode = -1;
+        var currentSize = 0;
+
+        var texture = { source: null };
+        var nextTexture = null;
+
+        var blend = -1;
+        var nextBlend = null;
+
         var sprite;
 
-        for (var i = 0, j = this.currentBatchSize; i < j; i++)
+        for (var i = 0; i < this._size; i++)
         {
-            sprite = this.batchSprites[i];
+            sprite = this._batch[i];
 
             nextTexture = sprite.texture.baseTexture;
-            nextBlendMode = sprite.blendMode;
+            nextBlend = sprite.blendMode;
 
-            if (currentBlendMode !== nextBlendMode)
+            if (blend !== nextBlend)
             {
-                if (nextBlendMode === PhaserMicro.BLEND_NORMAL)
+                //  Unrolled for speed
+                if (nextBlend === PhaserMicro.BLEND_NORMAL)
                 {
                     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlendMode === PhaserMicro.BLEND_ADD)
+                else if (nextBlend === PhaserMicro.BLEND_ADD)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
                 }
-                else if (nextBlendMode === PhaserMicro.BLEND_MULTIPLY)
+                else if (nextBlend === PhaserMicro.BLEND_MULTIPLY)
                 {
                     gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlendMode === PhaserMicro.BLEND_SCREEN)
+                else if (nextBlend === PhaserMicro.BLEND_SCREEN)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
                 }
             }
 
-            if (currentBaseTexture.source !== nextTexture.source)
+            if (texture.source !== nextTexture.source)
             {
-                PhaserMicro.log('texture !== next');
+                // PhaserMicro.log('texture !== next');
 
-                if (batchSize > 0)
+                if (currentSize > 0)
                 {
-                    console.log('draw1', batchSize);
-                    gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._gl[gl.id]);
-                    gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
-                    this.drawCount++;
+                    // console.log('draw1', currentSize);
+                    gl.bindTexture(gl.TEXTURE_2D, texture._gl[gl.id]);
+                    gl.drawElements(gl.TRIANGLES, currentSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
                 }
 
                 start = i;
-                batchSize = 0;
-                currentBaseTexture = nextTexture;
+                currentSize = 0;
+                texture = nextTexture;
             }
 
-            batchSize++;
+            currentSize++;
         }
 
-        if (batchSize > 0)
+        if (currentSize > 0)
         {
-            console.log('draw2', batchSize);
-            gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._gl[gl.id]);
-            gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
-            this.drawCount++;
+            // console.log('draw2', currentSize);
+            gl.bindTexture(gl.TEXTURE_2D, texture._gl[gl.id]);
+            gl.drawElements(gl.TRIANGLES, currentSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
         }
 
-        // then reset the batch!
-        this.currentBatchSize = 0;
+        //  Reset the batch
+        this._size = 0;
 
     },
 
