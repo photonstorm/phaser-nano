@@ -164,13 +164,13 @@ PhaserMicro.Game.prototype = {
 
         this.renderer.render();
 
-        if (this.frameCount < 1)
-        {
-            window.requestAnimationFrame(this.update.bind(this));
-            this.frameCount++;
-        }
+        // if (this.frameCount < 1)
+        // {
+        //     window.requestAnimationFrame(this.update.bind(this));
+        //     this.frameCount++;
+        // }
 
-        // window.requestAnimationFrame(this.update.bind(this));
+        window.requestAnimationFrame(this.update.bind(this));
 
     },
 

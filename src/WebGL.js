@@ -254,9 +254,85 @@ PhaserMicro.WebGL.prototype = {
             }
         }
 
+        //  External render hook (BEFORE the batch flush!)
+        if (this.game.state.render)
+        {
+            this.game.state.render.call(this.game.state, this);
+        }
+
         // PhaserMicro.log('renderWebGL end', '#ff0000');
 
         this.flush();
+
+    },
+
+    blit: function (x, y, texture) {
+
+        if (this._size >= this.batchSize)
+        {
+            // PhaserMicro.log('flush 1');
+            this.flush();
+            this._base = texture.baseTexture;
+        }
+
+        var uvs = texture._uvs;
+        var alpha = 1;
+        var tint = 0xffffff;
+
+        var aX = 0;
+        var aY = 0;
+
+        var w0 = (texture.frame.width) * (1 - aX);
+        var w1 = (texture.frame.width) * -aX;
+
+        var h0 = texture.frame.height * (1 - aY);
+        var h1 = texture.frame.height * -aY;
+
+        //  Merge scale values in here
+        var a = 1;
+        var b = 0;
+        var c = 0;
+        var d = 1;
+        var tx = x;
+        var ty = y;
+
+        var verts = this.vertices;
+        var i = this._size * 4 * this.vertSize;
+
+        //  Top Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w1 + ty;
+        verts[i++] = uvs.x0;
+        verts[i++] = uvs.y0;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Top Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w0 + ty;
+        verts[i++] = uvs.x1;
+        verts[i++] = uvs.y1;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Bottom Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w0 + ty;
+        verts[i++] = uvs.x2;
+        verts[i++] = uvs.y2;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Bottom Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w1 + ty;
+        verts[i++] = uvs.x3;
+        verts[i++] = uvs.y3;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+        
+        //  Increment the batchsize
+        this._batch[this._size++] = { blendMode: 0, texture: texture };
 
     },
 
@@ -368,7 +444,7 @@ PhaserMicro.WebGL.prototype = {
             return;
         }
 
-        PhaserMicro.log('flush');
+        // PhaserMicro.log('flush');
 
         var gl = this.gl;
 
@@ -376,7 +452,7 @@ PhaserMicro.WebGL.prototype = {
         {
             //  Always dirty the first pass through
             //  but subsequent calls may be clean
-            PhaserMicro.log('flush dirty');
+            // PhaserMicro.log('flush dirty');
 
             this.dirty = false;
 
@@ -426,6 +502,7 @@ PhaserMicro.WebGL.prototype = {
 
         for (var i = 0; i < this._size; i++)
         {
+            //  Could be a sprite OR a texture
             sprite = this._batch[i];
 
             nextTexture = sprite.texture.baseTexture;
