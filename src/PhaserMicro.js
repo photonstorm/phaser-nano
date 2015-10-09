@@ -283,11 +283,9 @@
                 throw new Error('Browser does not support WebGL');
             }
 
-            // this.glContextId = gl.id = PIXI.WebGLRenderer.glContextId ++;
-
             this.glContextId = gl.id = 0;
 
-            PhaserMicro.log('initWebGL', this.glContextId);
+            PhaserMicro.log('initWebGL ' + this.glContextId);
 
             gl.disable(gl.DEPTH_TEST);
             gl.disable(gl.CULL_FACE);
@@ -313,7 +311,7 @@
 
             // 65535 is max index, so 65535 / 6 = 10922.
 
-            //upload the index data
+            //  Upload the index data
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
 
@@ -322,6 +320,9 @@
 
             this.currentBlendMode = 99999;
 
+            this.initShader();
+
+            /*
             var shader = new PhaserMicro.Shader(gl);
 
             shader.fragmentSrc = this.defaultShader.fragmentSrc;
@@ -329,6 +330,105 @@
             shader.init();
 
             this.defaultShader.shaders[gl.id] = shader;
+
+            this.gl.useProgram(shader.program);
+
+            this.setAttribs(shader.attributes);
+            */
+
+        },
+
+        initShader: function () {
+
+            PhaserMicro.log('initShader', '#ffffff', '#ff0000');
+
+            var gl = this.gl;
+
+            var vertexSrc = [
+                'attribute vec2 aVertexPosition;',
+                'attribute vec2 aTextureCoord;',
+                'attribute vec4 aColor;',
+
+                'uniform vec2 projectionVector;',
+                'uniform vec2 offsetVector;',
+
+                'varying vec2 vTextureCoord;',
+                'varying vec4 vColor;',
+
+                'const vec2 center = vec2(-1.0, 1.0);',
+
+                'void main(void) {',
+                '   gl_Position = vec4( ((aVertexPosition + offsetVector) / projectionVector) + center , 0.0, 1.0);',
+                '   vTextureCoord = aTextureCoord;',
+                '   vec3 color = mod(vec3(aColor.y/65536.0, aColor.y/256.0, aColor.y), 256.0) / 256.0;',
+                '   vColor = vec4(color * aColor.x, aColor.x);',
+                '}'
+            ];
+
+            var fragmentSrc = [
+                'precision lowp float;',
+                'varying vec2 vTextureCoord;',
+                'varying vec4 vColor;',
+                'uniform sampler2D uSampler;',
+                'void main(void) {',
+                '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor ;',
+                '}'
+            ];
+
+            var fragmentShader = this.compileShader(fragmentSrc, gl.FRAGMENT_SHADER);
+            var vertexShader = this.compileShader(vertexSrc, gl.VERTEX_SHADER);
+            var program = gl.createProgram();
+
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+            {
+                PhaserMicro.log("Could not initialise shaders");
+                return false;
+            }
+            else
+            {
+                //  Set Shader
+                gl.useProgram(program);
+
+                //  vertex position
+                gl.enableVertexAttribArray(0);
+
+                //  texture coordinate
+                gl.enableVertexAttribArray(1);
+
+                //  color attribute
+                gl.enableVertexAttribArray(2);
+
+                //  Shader uniforms
+                this.uSampler = gl.getUniformLocation(program, 'uSampler');
+                this.projectionVector = gl.getUniformLocation(program, 'projectionVector');
+                this.offsetVector = gl.getUniformLocation(program, 'offsetVector');
+                this.dimensions = gl.getUniformLocation(program, 'dimensions');
+
+                this.program = program;
+
+                return true;
+            }
+
+        },
+
+        compileShader: function (src, type) {
+
+            var gl = this.gl;
+            var src = src.join("\n");
+            var shader = gl.createShader(type);
+            gl.shaderSource(shader, src);
+            gl.compileShader(shader);
+
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+            {
+                return null;
+            }
+
+            return shader;
 
         },
 
@@ -355,9 +455,9 @@
 
             PhaserMicro.log('renderWebGL start', '#ff0000');
 
-            this.setShader(this.defaultShader.shaders[gl.id]);
-
-            this.shader = this.defaultShader.shaders[gl.id];
+            //  Instead of every loop, can we do once in init?
+            // this.setShader(this.defaultShader.shaders[gl.id]);
+            // this.shader = this.defaultShader.shaders[gl.id];
 
             this.dirty = true;
 
@@ -403,11 +503,18 @@
 
             var gl = this.gl;
 
-            for (i = 0; i < attribs.length; i++)
-            {
+            PhaserMicro.log('setAttribs ' + attribs.length, '#00ff00');
+
+            gl.enableVertexAttribArray(0);
+            gl.enableVertexAttribArray(1);
+            gl.enableVertexAttribArray(2);
+
+            // for (i = 0; i < attribs.length; i++)
+            // {
+                // PhaserMicro.log('setAttribs ' + i, '#00ff00');
                 // if (this.tempAttribState[i])
                 // {
-                    gl.enableVertexAttribArray(i);
+                    // gl.enableVertexAttribArray(i);
                 // }
                 // else
                 // {
@@ -417,7 +524,7 @@
                 // var attribId = attribs[i];
                 // tempAttribs[attribId] = true;
                 // this.tempAttribState[attribId] = true;
-            }
+            // }
 
 
             //  Original from WebGLShaderManager
@@ -570,6 +677,113 @@
 
         flushBatch: function () {
 
+            if (this.currentBatchSize === 0)
+            {
+                //  Nothing more to draw
+                return;
+            }
+
+            PhaserMicro.log('flush');
+
+            var gl = this.gl;
+
+            if (this.dirty)
+            {
+                //  Always dirty the first pass through
+                //  but subsequent calls may be clean
+                PhaserMicro.log('flush dirty');
+
+                this.dirty = false;
+
+                // bind the main texture
+                gl.activeTexture(gl.TEXTURE0);
+
+                // bind the buffers
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+
+                //  set the projection vector (done every loop)
+                gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
+
+                // shader =  this.defaultShader.shaders[gl.id];
+                // gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
+
+                //  Does stride ever change? (doubtful)
+                var stride = this.vertSize * 4;
+
+                //  vertex position
+                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
+
+                //  texture coordinate
+                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 2 * 4);
+
+                //  color attribute
+                gl.vertexAttribPointer(2, 2, gl.FLOAT, false, stride, 4 * 4);
+
+                // gl.vertexAttribPointer(shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
+                // gl.vertexAttribPointer(shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
+                // gl.vertexAttribPointer(shader.colorAttribute, 2, gl.FLOAT, false, stride, 4 * 4);
+            }
+
+            //  Upload the verts to the buffer
+            if (this.currentBatchSize > (this.batchSize * 0.5))
+            {
+                PhaserMicro.log('flush verts 1');
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
+            }
+            else
+            {
+                PhaserMicro.log('flush verts 2');
+                var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
+            }
+
+            // var nextTexture, nextBlendMode, nextShader;
+            var nextTexture = null;
+            var batchSize = 0;
+            var start = 0;
+            var currentBaseTexture = null;
+            var sprite;
+
+            for (var i = 0, j = this.currentBatchSize; i < j; i++)
+            {
+                sprite = this.batchSprites[i];
+
+                nextTexture = sprite.texture.baseTexture;
+
+                if (currentBaseTexture !== nextTexture)
+                {
+                    PhaserMicro.log('texture !== next');
+
+                    if (batchSize > 0)
+                    {
+                        gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
+                        gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
+                        this.drawCount++;
+                    }
+
+                    start = i;
+                    batchSize = 0;
+                    currentBaseTexture = nextTexture;
+                }
+
+                batchSize++;
+            }
+
+            if (batchSize > 0)
+            {
+                gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._glTextures[gl.id]);
+                gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
+                this.drawCount++;
+            }
+
+            // then reset the batch!
+            this.currentBatchSize = 0;
+
+        },
+
+        _flushBatch: function () {
+
             // If the batch is length 0 then return as there is nothing to draw
             if (this.currentBatchSize===0)return;
 
@@ -590,6 +804,7 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 
+                //  set the project vector (done every loop)
                 shader =  this.defaultShader.shaders[gl.id];
                 gl.uniform2f(shader.projectionVector, this.projection.x, this.projection.y);
 
@@ -1676,6 +1891,10 @@
         this.aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
         this.colorAttribute = gl.getAttribLocation(program, 'aColor');
 
+        console.log('avp', this.aVertexPosition);
+        console.log('atc', this.aTextureCoord);
+        console.log('ca', this.colorAttribute);
+
         this.attributes = [this.aVertexPosition, this.aTextureCoord, this.colorAttribute];
 
         // add those custom shaders!
@@ -1693,6 +1912,8 @@
 
     PhaserMicro.Shader.prototype.initUniforms = function() {
 
+        PhaserMicro.log('---> initUniforms', '#ffffff', '#232323');
+
         this.textureCount = 1;
 
         var gl = this.gl;
@@ -1703,6 +1924,8 @@
             uniform = this.uniforms[key];
 
             var type = uniform.type;
+
+            PhaserMicro.log(type, '#ffffff', '#232323');
 
             if (type === 'sampler2D')
             {
@@ -1759,6 +1982,8 @@
     };
 
     PhaserMicro.Shader.prototype.initSampler2D = function(uniform) {
+
+        PhaserMicro.log('---> initSampler2D', '#ffffff', '#232323');
 
         if (!uniform.value || !uniform.value.baseTexture || !uniform.value.baseTexture.hasLoaded)
         {
@@ -1829,6 +2054,8 @@
     };
 
     PhaserMicro.Shader.prototype.syncUniforms = function() {
+
+        PhaserMicro.log('---> syncUniforms', '#ffffff', '#232323');
 
         this.textureCount = 1;
 
