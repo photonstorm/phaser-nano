@@ -16,26 +16,100 @@ PhaserMicro.Cache = function (game) {
 
 PhaserMicro.Cache.prototype = {
 
+    //  These two methods are very similar, let's see if we can consolidate
+
     addImage: function (key, url, data) {
 
-        var img = {
+        var obj = {
             key: key,
             url: url,
             data: data,
-            base: new PhaserMicro.BaseTexture(data)
+            base: new PhaserMicro.BaseTexture(data, [new PhaserMicro.Rectangle(0, 0, data.width, data.height)])
         };
 
-        //  WebGL only
         if (this.game.pixelArt)
         {
-            img.base.scaleMode = 1;
+            obj.base.scaleMode = 1;
         }
 
-        this.game.renderer.loadTexture(img.base);
+        //  WebGL only
+        this.game.renderer.loadTexture(obj.base);
 
-        this._cache.image[key] = img;
+        this._cache.image[key] = obj;
 
-        return img;
+    },
+
+    addSpriteSheet: function (key, url, data, frameWidth, frameHeight, frameMax, margin, spacing) {
+
+        var frames = this.buildSheet(data, frameWidth, frameHeight, frameMax, margin, spacing);
+
+        var obj = {
+            key: key,
+            url: url,
+            data: data,
+            base: new PhaserMicro.BaseTexture(data, frames)
+        };
+
+        if (this.game.pixelArt)
+        {
+            obj.base.scaleMode = 1;
+        }
+
+        //  WebGL only
+        this.game.renderer.loadTexture(obj.base);
+
+        this._cache.image[key] = obj;
+
+    },
+
+    buildSheet: function (img, frameWidth, frameHeight, frameMax, margin, spacing) {
+
+        var width = img.width;
+        var height = img.height;
+        var frames = [];
+
+        if (frameWidth <= 0)
+        {
+            frameWidth = Math.floor(-width / Math.min(-1, frameWidth));
+        }
+
+        if (frameHeight <= 0)
+        {
+            frameHeight = Math.floor(-height / Math.min(-1, frameHeight));
+        }
+
+        var row = Math.floor((width - margin) / (frameWidth + spacing));
+        var column = Math.floor((height - margin) / (frameHeight + spacing));
+        var total = row * column;
+
+        if (frameMax !== -1)
+        {
+            total = frameMax;
+        }
+
+        //  Zero or smaller than frame sizes?
+        if (width === 0 || height === 0 || width < frameWidth || height < frameHeight || total === 0)
+        {
+            return frames;
+        }
+
+        var x = margin;
+        var y = margin;
+
+        for (var i = 0; i < total; i++)
+        {
+            frames.push(new PhaserMicro.Rectangle(x, y, frameWidth, frameHeight));
+
+            x += frameWidth + spacing;
+
+            if (x + frameWidth > width)
+            {
+                x = margin;
+                y += frameHeight + spacing;
+            }
+        }
+
+        return frames;
 
     },
 

@@ -5,17 +5,17 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Sprite = function (game, x, y, key) {
+PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.game = game;
 
-    this.position = { x: x, y: y };
+    this.position = new PhaserMicro.Point(x, y);
 
-    this.scale = { x: 1, y: 1 };
+    this.scale = new PhaserMicro.Point(1, 1);
 
-    this.anchor = { x: 0, y: 0 };
+    this.anchor = new PhaserMicro.Point();
 
-    this.pivot = { x: 0, y: 0 };
+    this.pivot = new PhaserMicro.Point();
 
     this.rotation = 0;
 
@@ -34,7 +34,7 @@ PhaserMicro.Sprite = function (game, x, y, key) {
 
     this.blendMode = PhaserMicro.BLEND_NORMAL;
 
-    this.texture = new PhaserMicro.Texture(game.cache.getTexture(key));
+    this.texture = new PhaserMicro.Texture(game.cache.getTexture(key), frame);
 
     this._width = this.texture.width;
     this._height = this.texture.height;
@@ -186,6 +186,18 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
             this.position.y = value;
         }
 
-    }
+    },
+
+    'frame': {
+
+        get: function() {
+            return this.texture._frame;
+        },
+
+        set: function(value) {
+            this.texture.setFrame(value);
+        }
+
+    },
 
 });

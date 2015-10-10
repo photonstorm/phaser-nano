@@ -90,6 +90,16 @@ PhaserMicro.Loader.prototype = {
 
     },
 
+    spritesheet: function (key, url, frameWidth, frameHeight, frameMax, margin, spacing) {
+
+        if (frameMax === undefined) { frameMax = -1; }
+        if (margin === undefined) { margin = 0; }
+        if (spacing === undefined) { spacing = 0; }
+
+        return this.addToFileList('spritesheet', key, url, { frameWidth: frameWidth, frameHeight: frameHeight, frameMax: frameMax, margin: margin, spacing: spacing }, '.png');
+
+    },
+
     start: function () {
 
         if (this.isLoading)
@@ -201,6 +211,7 @@ PhaserMicro.Loader.prototype = {
         switch (file.type)
         {
             case 'image':
+            case 'spritesheet':
                 this.loadImageTag(file);
                 break;
         }
@@ -276,6 +287,11 @@ PhaserMicro.Loader.prototype = {
             case 'image':
 
                 this.cache.addImage(file.key, file.url, file.data);
+                break;
+
+            case 'spritesheet':
+
+                this.cache.addSpriteSheet(file.key, file.url, file.data, file.frameWidth, file.frameHeight, file.frameMax, file.margin, file.spacing);
                 break;
         }
 

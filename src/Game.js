@@ -202,9 +202,9 @@ PhaserMicro.Game.prototype = {
 
     },
 
-    addChild: function (x, y, key) {
+    addChild: function (x, y, key, frame) {
 
-        var sprite = new PhaserMicro.Sprite(this, x, y, key);
+        var sprite = new PhaserMicro.Sprite(this, x, y, key, frame);
 
         sprite.parent = this.renderer;
 

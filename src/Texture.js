@@ -5,23 +5,40 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Texture = function (baseTexture) {
+PhaserMicro.Texture = function (baseTexture, frame) {
+
+    if (frame === undefined) { frame = 0; }
 
     this.baseTexture = baseTexture;
 
-    this.frame = { x: 0, y: 0, width: baseTexture.width, height:baseTexture.height };
-    this.width = this.frame.width;
-    this.height = this.frame.height;
+    this._frame = -1;
 
-    this.requiresUpdate = false;
+    this.frame = new PhaserMicro.Rectangle();
 
+    this.width = 0;
+    this.height = 0;
+
+    //  UV coordinates
     this._uvs = { x0: 0, y0: 0, x1: 0, y1: 0, x2: 0, y2: 0, x3: 0, y3: 0 };
 
-    this.updateUVs();
+    this.setFrame(frame);
 
 };
 
 PhaserMicro.Texture.prototype = {
+
+    setFrame: function (value) {
+
+        var baseFrame = this.baseTexture.frameData[value];
+
+        if (baseFrame && value !== this._frame)
+        {
+            this._frame = value;
+            this.frame.copyFrom(baseFrame);
+            this.updateUVs();
+        }
+
+    },
 
     updateUVs: function () {
 
@@ -46,11 +63,14 @@ PhaserMicro.Texture.prototype = {
 
 };
 
-PhaserMicro.BaseTexture = function (source) {
+PhaserMicro.BaseTexture = function (source, frameData) {
+
+    this.source = source;
 
     this.width = source.width;
     this.height = source.height;
-    this.source = source;
+
+    this.frameData = frameData;
 
     this.scaleMode = PhaserMicro.LINEAR;
     this.premultipliedAlpha = true;
