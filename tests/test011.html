@@ -24,9 +24,12 @@
         game.pixelArt = true;
 
         game.load.image('sky', 'assets/sky2.png');
-        game.load.spritesheet('diamonds', 'assets/diamonds32x24x5.png', 32, 24);
+        game.load.spritesheet('monster', 'assets/metalslug_monster39x40.png', 39, 40);
 
     }
+
+    var pool = [];
+    var tick = 0;
 
     function create() {
 
@@ -34,21 +37,49 @@
 
         var sprite;
 
-        for (var f = 0; f < 5; f++)
+        for (var i = 0; i < 500; i++)
         {
-            for (var i = 0; i < 100; i++)
-            {
-                var x = Math.random() * game.width;
-                var y = Math.random() * game.height;
+            var x = -800 + (Math.random() * 800);
+            var y = Math.random() * game.height;
 
-                //  Testing spritesheet + frame number support
-                sprite = game.addChild(x, y, 'diamonds', f);
-            }
+            sprite = game.addChild(x, y, 'monster');
+            pool.push(sprite);
         }
 
     }
 
     function update() {
+
+        var advance = false;
+
+        if (Date.now() > tick)
+        {
+            tick = Date.now() + 40;
+            advance = true;
+        }
+
+        for (var i = 0; i < pool.length; i++)
+        {
+            pool[i].x += 1;
+
+            if (pool[i].x > 800)
+            {
+                pool[i].x = -100;
+            }
+
+            if (advance)
+            {
+                if (pool[i].frame === 15)
+                {
+                    pool[i].frame = 0;
+                }
+                else
+                {
+                    pool[i].frame++;
+                }
+            }
+
+        }
 
     }
 
