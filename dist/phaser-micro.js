@@ -175,13 +175,13 @@ PhaserMicro.Game.prototype = {
 
         this.renderer.render();
 
-        if (this.frameCount < 1)
-        {
-            window.requestAnimationFrame(this.update.bind(this));
-            this.frameCount++;
-        }
+        // if (this.frameCount < 1)
+        // {
+        //     window.requestAnimationFrame(this.update.bind(this));
+        //     this.frameCount++;
+        // }
 
-        // window.requestAnimationFrame(this.update.bind(this));
+        window.requestAnimationFrame(this.update.bind(this));
 
     },
 
@@ -213,9 +213,9 @@ PhaserMicro.Game.prototype = {
 
     },
 
-    addChild: function (x, y, key) {
+    addChild: function (x, y, key, frame) {
 
-        var sprite = new PhaserMicro.Sprite(this, x, y, key);
+        var sprite = new PhaserMicro.Sprite(this, x, y, key, frame);
 
         sprite.parent = this.renderer;
 
@@ -254,26 +254,34 @@ PhaserMicro.WebGL = function (game) {
         preserveDrawingBuffer: false
     };
 
+    //  Temporary - will move to a World container
     this.worldAlpha = 1;
     this.worldTransform = new PhaserMicro.Matrix();
 
-    this.projection = { x: 0, y: 0 };
-    this.offset = { x: 0, y: 0 };
-    this.drawCount = 0;
-    this.vertSize = 6;
-    this.stride = this.vertSize * 4;
-    this.batchSize = 2000;
-    this.batchSprites = [];
     this.contextLost = false;
+
+    this.projection = { x: 0, y: 0 };
+
+    this.vertSize = 6;
+    this.batchSize = 2000;
+
+    this.stride = this.vertSize * 4;
+
     this.vertices = new Float32Array(this.batchSize * 4 * this.vertSize);
     this.indices = new Uint16Array(this.batchSize * 6);
-    this.lastIndexCount = 0;
-    this.drawing = false;
-    this.currentBatchSize = 0;
-    this.currentBaseTexture = null;
+
+    this._size = 0;
+    this._batch = [];
+    this._base = null;
+
     this.dirty = true;
-    this.textures = [];
-    this._UID = 0;
+
+    // this.lastIndexCount = 0;
+    // this.drawCount = 0;
+    // this.drawing = false;
+    // this.offset = { x: 0, y: 0 };
+    // this.textures = [];
+    // this._UID = 0;
 
 };
 
@@ -341,6 +349,10 @@ PhaserMicro.WebGL.prototype = {
 
         var gl = this.gl;
 
+        //  We could have the projectionVector as a const instead
+        //  'const vec2 projectionVector = vec2(400.0, -300.0);',
+        //  but it assumes the game size never changes. Would avoid a single uniform though.
+
         var vertexSrc = [
             'attribute vec2 aVertexPosition;',
             'attribute vec2 aTextureCoord;',
@@ -361,13 +373,15 @@ PhaserMicro.WebGL.prototype = {
             '}'
         ];
 
+        //  Changed to mediump to avoid crashing older Androids (#2147)
+
         var fragmentSrc = [
-            'precision lowp float;',
+            'precision mediump float;',
             'varying vec2 vTextureCoord;',
             'varying vec4 vColor;',
             'uniform sampler2D uSampler;',
             'void main(void) {',
-            '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor ;',
+            '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor;',
             '}'
         ];
 
@@ -389,6 +403,11 @@ PhaserMicro.WebGL.prototype = {
             //  Set Shader
             gl.useProgram(program);
 
+            //  Get and store the attributes
+            this.aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+            this.aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+            this.colorAttribute = gl.getAttribLocation(program, 'aColor');
+
             //  vertex position
             gl.enableVertexAttribArray(0);
 
@@ -398,13 +417,15 @@ PhaserMicro.WebGL.prototype = {
             //  color attribute
             gl.enableVertexAttribArray(2);
 
-            //  Shader uniforms
-            this.uSampler = gl.getUniformLocation(program, 'uSampler');
+            //  The projection vector (middle of the game world)
             this.projectionVector = gl.getUniformLocation(program, 'projectionVector');
-            // this.offsetVector = gl.getUniformLocation(program, 'offsetVector');
-            this.dimensions = gl.getUniformLocation(program, 'dimensions');
 
-            this.program = program;
+            //  Un-used Shader uniforms
+            // this.uSampler = gl.getUniformLocation(program, 'uSampler');
+            // this.dimensions = gl.getUniformLocation(program, 'dimensions');
+
+            //  Shader reference - not needed globally atm, leave commented for now
+            // this.program = program;
 
             return true;
         }
@@ -447,9 +468,8 @@ PhaserMicro.WebGL.prototype = {
 
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        this.drawCount = 0;
-        this.currentBatchSize = 0;
-        this.batchSprites = [];
+        this._size = 0;
+        this._batch = [];
 
         // PhaserMicro.log('renderWebGL start', '#ff0000');
 
@@ -469,9 +489,85 @@ PhaserMicro.WebGL.prototype = {
             }
         }
 
+        //  External render hook (BEFORE the batch flush!)
+        if (this.game.state.render)
+        {
+            this.game.state.render.call(this.game.state, this);
+        }
+
         // PhaserMicro.log('renderWebGL end', '#ff0000');
 
-        this.flushBatch();
+        this.flush();
+
+    },
+
+    blit: function (x, y, texture) {
+
+        if (this._size >= this.batchSize)
+        {
+            // PhaserMicro.log('flush 1');
+            this.flush();
+            this._base = texture.baseTexture;
+        }
+
+        var uvs = texture._uvs;
+        var alpha = 1;
+        var tint = 0xffffff;
+
+        var aX = 0;
+        var aY = 0;
+
+        var w0 = (texture.frame.width) * (1 - aX);
+        var w1 = (texture.frame.width) * -aX;
+
+        var h0 = texture.frame.height * (1 - aY);
+        var h1 = texture.frame.height * -aY;
+
+        //  Merge scale values in here
+        var a = 1;
+        var b = 0;
+        var c = 0;
+        var d = 1;
+        var tx = x;
+        var ty = y;
+
+        var verts = this.vertices;
+        var i = this._size * 4 * this.vertSize;
+
+        //  Top Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w1 + ty;
+        verts[i++] = uvs.x0;
+        verts[i++] = uvs.y0;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Top Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w0 + ty;
+        verts[i++] = uvs.x1;
+        verts[i++] = uvs.y1;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Bottom Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w0 + ty;
+        verts[i++] = uvs.x2;
+        verts[i++] = uvs.y2;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Bottom Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w1 + ty;
+        verts[i++] = uvs.x3;
+        verts[i++] = uvs.y3;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+        
+        //  Increment the batchsize
+        this._batch[this._size++] = { blendMode: 0, texture: texture };
 
     },
 
@@ -481,24 +577,17 @@ PhaserMicro.WebGL.prototype = {
 
         var texture = sprite.texture;
         
-        if (this.currentBatchSize >= this.batchSize)
+        if (this._size >= this.batchSize)
         {
             // PhaserMicro.log('flush 1');
-            this.flushBatch();
-            this.currentBaseTexture = texture.baseTexture;
+            this.flush();
+            this._base = texture.baseTexture;
         }
 
-        // get the uvs for the texture
-
         var uvs = texture._uvs;
-
-        // get the sprites current alpha
         var alpha = sprite.worldAlpha;
         var tint = sprite.tint;
 
-        var verticies = this.vertices;
-
-        //  anchor
         var aX = sprite.anchor.x;
         var aY = sprite.anchor.y;
 
@@ -531,77 +620,66 @@ PhaserMicro.WebGL.prototype = {
         }
         */
 
-        var index = this.currentBatchSize * 4 * this.vertSize;
-        
-        var worldTransform = sprite.worldTransform;
+        var wt = sprite.worldTransform;
 
-        var a = worldTransform.a;
-        var b = worldTransform.b;
-        var c = worldTransform.c;
-        var d = worldTransform.d;
-        var tx = worldTransform.tx;
-        var ty = worldTransform.ty;
+        var a = wt.a;
+        var b = wt.b;
+        var c = wt.c;
+        var d = wt.d;
+        var tx = wt.tx;
+        var ty = wt.ty;
 
-        //  Top Left vert
-        // xy
-        verticies[index++] = a * w1 + c * h1 + tx;
-        verticies[index++] = d * h1 + b * w1 + ty;
-        // uv
-        verticies[index++] = uvs.x0;
-        verticies[index++] = uvs.y0;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        var verts = this.vertices;
+        var i = this._size * 4 * this.vertSize;
 
-        //  Top Right vert
-        // xy
-        verticies[index++] = a * w0 + c * h1 + tx;
-        verticies[index++] = d * h1 + b * w0 + ty;
-        // uv
-        verticies[index++] = uvs.x1;
-        verticies[index++] = uvs.y1;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        //  Top Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w1 + ty;
+        verts[i++] = uvs.x0;
+        verts[i++] = uvs.y0;
+        verts[i++] = alpha;
+        verts[i++] = tint;
 
-        //  Bottom Right vert
-        // xy
-        verticies[index++] = a * w0 + c * h0 + tx;
-        verticies[index++] = d * h0 + b * w0 + ty;
-        // uv
-        verticies[index++] = uvs.x2;
-        verticies[index++] = uvs.y2;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        //  Top Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h1 + tx;
+        verts[i++] = d * h1 + b * w0 + ty;
+        verts[i++] = uvs.x1;
+        verts[i++] = uvs.y1;
+        verts[i++] = alpha;
+        verts[i++] = tint;
 
-        //  Bottom Left vert
-        // xy
-        verticies[index++] = a * w1 + c * h0 + tx;
-        verticies[index++] = d * h0 + b * w1 + ty;
-        // uv
-        verticies[index++] = uvs.x3;
-        verticies[index++] = uvs.y3;
-        // color
-        verticies[index++] = alpha;
-        verticies[index++] = tint;
+        //  Bottom Right vert (xy, uv, color)
+        verts[i++] = a * w0 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w0 + ty;
+        verts[i++] = uvs.x2;
+        verts[i++] = uvs.y2;
+        verts[i++] = alpha;
+        verts[i++] = tint;
+
+        //  Bottom Left vert (xy, uv, color)
+        verts[i++] = a * w1 + c * h0 + tx;
+        verts[i++] = d * h0 + b * w1 + ty;
+        verts[i++] = uvs.x3;
+        verts[i++] = uvs.y3;
+        verts[i++] = alpha;
+        verts[i++] = tint;
         
         // PhaserMicro.log('added to batch array');
 
         // increment the batchsize
-        this.batchSprites[this.currentBatchSize++] = sprite;
+        this._batch[this._size++] = sprite;
 
     },
 
-    flushBatch: function () {
+    flush: function () {
 
-        if (this.currentBatchSize === 0)
+        if (this._size === 0)
         {
             //  Nothing more to draw
             return;
         }
 
-        PhaserMicro.log('flush');
+        // PhaserMicro.log('flush');
 
         var gl = this.gl;
 
@@ -609,7 +687,7 @@ PhaserMicro.WebGL.prototype = {
         {
             //  Always dirty the first pass through
             //  but subsequent calls may be clean
-            PhaserMicro.log('flush dirty');
+            // PhaserMicro.log('flush dirty');
 
             this.dirty = false;
 
@@ -620,21 +698,21 @@ PhaserMicro.WebGL.prototype = {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 
-            //  set the projection vector (done every loop)
+            //  set the projection vector (defaults to middle of game world on negative y)
             gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
 
             //  vertex position
-            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, this.stride, 0);
+            gl.vertexAttribPointer(this.aVertexPosition, 2, gl.FLOAT, false, this.stride, 0);
 
             //  texture coordinate
-            gl.vertexAttribPointer(1, 2, gl.FLOAT, false, this.stride, 2 * 4);
+            gl.vertexAttribPointer(this.aTextureCoord, 2, gl.FLOAT, false, this.stride, 2 * 4);
 
             //  color attribute
-            gl.vertexAttribPointer(2, 2, gl.FLOAT, false, this.stride, 4 * 4);
+            gl.vertexAttribPointer(this.colorAttribute, 2, gl.FLOAT, false, this.stride, 4 * 4);
         }
 
         //  Upload the verts to the buffer
-        if (this.currentBatchSize > (this.batchSize * 0.5))
+        if (this._size > (this.batchSize * 0.5))
         {
             // PhaserMicro.log('flush verts 1');
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
@@ -642,75 +720,78 @@ PhaserMicro.WebGL.prototype = {
         else
         {
             // PhaserMicro.log('flush verts 2');
-            var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
+            var view = this.vertices.subarray(0, this._size * 4 * this.vertSize);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
         }
 
-        var nextTexture = null;
-        var nextBlendMode = null;
-        var batchSize = 0;
         var start = 0;
-        var currentBaseTexture = { source: null };
-        var currentBlendMode = -1;
+        var currentSize = 0;
+
+        var texture = { source: null };
+        var nextTexture = null;
+
+        var blend = -1;
+        var nextBlend = null;
+
         var sprite;
 
-        for (var i = 0, j = this.currentBatchSize; i < j; i++)
+        for (var i = 0; i < this._size; i++)
         {
-            sprite = this.batchSprites[i];
+            //  Could be a sprite OR a texture
+            sprite = this._batch[i];
 
             nextTexture = sprite.texture.baseTexture;
-            nextBlendMode = sprite.blendMode;
+            nextBlend = sprite.blendMode;
 
-            if (currentBlendMode !== nextBlendMode)
+            if (blend !== nextBlend)
             {
-                if (nextBlendMode === PhaserMicro.BLEND_NORMAL)
+                //  Unrolled for speed
+                if (nextBlend === PhaserMicro.BLEND_NORMAL)
                 {
                     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlendMode === PhaserMicro.BLEND_ADD)
+                else if (nextBlend === PhaserMicro.BLEND_ADD)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
                 }
-                else if (nextBlendMode === PhaserMicro.BLEND_MULTIPLY)
+                else if (nextBlend === PhaserMicro.BLEND_MULTIPLY)
                 {
                     gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlendMode === PhaserMicro.BLEND_SCREEN)
+                else if (nextBlend === PhaserMicro.BLEND_SCREEN)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
                 }
             }
 
-            if (currentBaseTexture.source !== nextTexture.source)
+            if (texture.source !== nextTexture.source)
             {
-                PhaserMicro.log('texture !== next');
+                // PhaserMicro.log('texture !== next');
 
-                if (batchSize > 0)
+                if (currentSize > 0)
                 {
-                    console.log('draw1', batchSize);
-                    gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._gl[gl.id]);
-                    gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
-                    this.drawCount++;
+                    // console.log('draw1', currentSize);
+                    gl.bindTexture(gl.TEXTURE_2D, texture._gl[gl.id]);
+                    gl.drawElements(gl.TRIANGLES, currentSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
                 }
 
                 start = i;
-                batchSize = 0;
-                currentBaseTexture = nextTexture;
+                currentSize = 0;
+                texture = nextTexture;
             }
 
-            batchSize++;
+            currentSize++;
         }
 
-        if (batchSize > 0)
+        if (currentSize > 0)
         {
-            console.log('draw2', batchSize);
-            gl.bindTexture(gl.TEXTURE_2D, currentBaseTexture._gl[gl.id]);
-            gl.drawElements(gl.TRIANGLES, batchSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
-            this.drawCount++;
+            // console.log('draw2', currentSize);
+            gl.bindTexture(gl.TEXTURE_2D, texture._gl[gl.id]);
+            gl.drawElements(gl.TRIANGLES, currentSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
         }
 
-        // then reset the batch!
-        this.currentBatchSize = 0;
+        //  Reset the batch
+        this._size = 0;
 
     },
 
@@ -913,6 +994,16 @@ PhaserMicro.Loader.prototype = {
 
     },
 
+    spritesheet: function (key, url, frameWidth, frameHeight, frameMax, margin, spacing) {
+
+        if (frameMax === undefined) { frameMax = -1; }
+        if (margin === undefined) { margin = 0; }
+        if (spacing === undefined) { spacing = 0; }
+
+        return this.addToFileList('spritesheet', key, url, { frameWidth: frameWidth, frameHeight: frameHeight, frameMax: frameMax, margin: margin, spacing: spacing }, '.png');
+
+    },
+
     start: function () {
 
         if (this.isLoading)
@@ -1024,6 +1115,7 @@ PhaserMicro.Loader.prototype = {
         switch (file.type)
         {
             case 'image':
+            case 'spritesheet':
                 this.loadImageTag(file);
                 break;
         }
@@ -1100,6 +1192,11 @@ PhaserMicro.Loader.prototype = {
 
                 this.cache.addImage(file.key, file.url, file.data);
                 break;
+
+            case 'spritesheet':
+
+                this.cache.addSpriteSheet(file.key, file.url, file.data, file.frameWidth, file.frameHeight, file.frameMax, file.margin, file.spacing);
+                break;
         }
 
         if (loadNext)
@@ -1174,26 +1271,100 @@ PhaserMicro.Cache = function (game) {
 
 PhaserMicro.Cache.prototype = {
 
+    //  These two methods are very similar, let's see if we can consolidate
+
     addImage: function (key, url, data) {
 
-        var img = {
+        var obj = {
             key: key,
             url: url,
             data: data,
-            base: new PhaserMicro.BaseTexture(data)
+            base: new PhaserMicro.BaseTexture(data, [new PhaserMicro.Rectangle(0, 0, data.width, data.height)])
         };
 
-        //  WebGL only
         if (this.game.pixelArt)
         {
-            img.base.scaleMode = 1;
+            obj.base.scaleMode = 1;
         }
 
-        this.game.renderer.loadTexture(img.base);
+        //  WebGL only
+        this.game.renderer.loadTexture(obj.base);
 
-        this._cache.image[key] = img;
+        this._cache.image[key] = obj;
 
-        return img;
+    },
+
+    addSpriteSheet: function (key, url, data, frameWidth, frameHeight, frameMax, margin, spacing) {
+
+        var frames = this.buildSheet(data, frameWidth, frameHeight, frameMax, margin, spacing);
+
+        var obj = {
+            key: key,
+            url: url,
+            data: data,
+            base: new PhaserMicro.BaseTexture(data, frames)
+        };
+
+        if (this.game.pixelArt)
+        {
+            obj.base.scaleMode = 1;
+        }
+
+        //  WebGL only
+        this.game.renderer.loadTexture(obj.base);
+
+        this._cache.image[key] = obj;
+
+    },
+
+    buildSheet: function (img, frameWidth, frameHeight, frameMax, margin, spacing) {
+
+        var width = img.width;
+        var height = img.height;
+        var frames = [];
+
+        if (frameWidth <= 0)
+        {
+            frameWidth = Math.floor(-width / Math.min(-1, frameWidth));
+        }
+
+        if (frameHeight <= 0)
+        {
+            frameHeight = Math.floor(-height / Math.min(-1, frameHeight));
+        }
+
+        var row = Math.floor((width - margin) / (frameWidth + spacing));
+        var column = Math.floor((height - margin) / (frameHeight + spacing));
+        var total = row * column;
+
+        if (frameMax !== -1)
+        {
+            total = frameMax;
+        }
+
+        //  Zero or smaller than frame sizes?
+        if (width === 0 || height === 0 || width < frameWidth || height < frameHeight || total === 0)
+        {
+            return frames;
+        }
+
+        var x = margin;
+        var y = margin;
+
+        for (var i = 0; i < total; i++)
+        {
+            frames.push(new PhaserMicro.Rectangle(x, y, frameWidth, frameHeight));
+
+            x += frameWidth + spacing;
+
+            if (x + frameWidth > width)
+            {
+                x = margin;
+                y += frameHeight + spacing;
+            }
+        }
+
+        return frames;
 
     },
 
@@ -1227,23 +1398,40 @@ PhaserMicro.Cache.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Texture = function (baseTexture) {
+PhaserMicro.Texture = function (baseTexture, frame) {
+
+    if (frame === undefined) { frame = 0; }
 
     this.baseTexture = baseTexture;
 
-    this.frame = { x: 0, y: 0, width: baseTexture.width, height:baseTexture.height };
-    this.width = this.frame.width;
-    this.height = this.frame.height;
+    this._frame = -1;
 
-    this.requiresUpdate = false;
+    this.frame = new PhaserMicro.Rectangle();
 
+    this.width = 0;
+    this.height = 0;
+
+    //  UV coordinates
     this._uvs = { x0: 0, y0: 0, x1: 0, y1: 0, x2: 0, y2: 0, x3: 0, y3: 0 };
 
-    this.updateUVs();
+    this.setFrame(frame);
 
 };
 
 PhaserMicro.Texture.prototype = {
+
+    setFrame: function (value) {
+
+        var baseFrame = this.baseTexture.frameData[value];
+
+        if (baseFrame && value !== this._frame)
+        {
+            this._frame = value;
+            this.frame.copyFrom(baseFrame);
+            this.updateUVs();
+        }
+
+    },
 
     updateUVs: function () {
 
@@ -1268,11 +1456,14 @@ PhaserMicro.Texture.prototype = {
 
 };
 
-PhaserMicro.BaseTexture = function (source) {
+PhaserMicro.BaseTexture = function (source, frameData) {
+
+    this.source = source;
 
     this.width = source.width;
     this.height = source.height;
-    this.source = source;
+
+    this.frameData = frameData;
 
     this.scaleMode = PhaserMicro.LINEAR;
     this.premultipliedAlpha = true;
@@ -1303,17 +1494,17 @@ PhaserMicro.BaseTexture.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Sprite = function (game, x, y, key) {
+PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.game = game;
 
-    this.position = { x: x, y: y };
+    this.position = new PhaserMicro.Point(x, y);
 
-    this.scale = { x: 1, y: 1 };
+    this.scale = new PhaserMicro.Point(1, 1);
 
-    this.anchor = { x: 0, y: 0 };
+    this.anchor = new PhaserMicro.Point();
 
-    this.pivot = { x: 0, y: 0 };
+    this.pivot = new PhaserMicro.Point();
 
     this.rotation = 0;
 
@@ -1332,7 +1523,7 @@ PhaserMicro.Sprite = function (game, x, y, key) {
 
     this.blendMode = PhaserMicro.BLEND_NORMAL;
 
-    this.texture = new PhaserMicro.Texture(game.cache.getTexture(key));
+    this.texture = new PhaserMicro.Texture(game.cache.getTexture(key), frame);
 
     this._width = this.texture.width;
     this._height = this.texture.height;
@@ -1484,7 +1675,19 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
             this.position.y = value;
         }
 
-    }
+    },
+
+    'frame': {
+
+        get: function() {
+            return this.texture._frame;
+        },
+
+        set: function(value) {
+            this.texture.setFrame(value);
+        }
+
+    },
 
 });
 
@@ -1660,6 +1863,110 @@ PhaserMicro.identityMatrix = new PhaserMicro.Matrix();
 */
 
 
+/**
+* @author       Richard Davey <rich@photonstorm.com>
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
+/**
+* Creates a new Rectangle object with the top-left corner specified by the x and y parameters and with the specified width and height parameters.
+* If you call this function without parameters, a Rectangle with x, y, width, and height properties set to 0 is created.
+*
+* @class Phaser.Rectangle
+* @constructor
+* @param {number} x - The x coordinate of the top-left corner of the Rectangle.
+* @param {number} y - The y coordinate of the top-left corner of the Rectangle.
+* @param {number} width - The width of the Rectangle. Should always be either zero or a positive value.
+* @param {number} height - The height of the Rectangle. Should always be either zero or a positive value.
+*/
+PhaserMicro.Rectangle = function (x, y, width, height) {
+
+    x = x || 0;
+    y = y || 0;
+    width = width || 0;
+    height = height || 0;
+
+    /**
+    * @property {number} x - The x coordinate of the top-left corner of the Rectangle.
+    */
+    this.x = x;
+
+    /**
+    * @property {number} y - The y coordinate of the top-left corner of the Rectangle.
+    */
+    this.y = y;
+
+    /**
+    * @property {number} width - The width of the Rectangle. This value should never be set to a negative.
+    */
+    this.width = width;
+
+    /**
+    * @property {number} height - The height of the Rectangle. This value should never be set to a negative.
+    */
+    this.height = height;
+
+};
+
+PhaserMicro.Rectangle.prototype = {
+
+    copyFrom: function (src) {
+
+        this.x = src.x;
+        this.y = src.y;
+        this.width = src.width;
+        this.height = src.height;
+        
+    },
+
+    clone: function () {
+
+        return new PhaserMicro.Rectangle(this.x, this.y, this.width, this.height);
+
+    }
+
+};
+
+PhaserMicro.Point = function (x, y) {
+
+    x = x || 0;
+    y = y || 0;
+
+    /**
+    * @property {number} x - The x value of the point.
+    */
+    this.x = x;
+
+    /**
+    * @property {number} y - The y value of the point.
+    */
+    this.y = y;
+
+};
+
+PhaserMicro.Point.prototype = {
+
+    /**
+    * Sets the `x` and `y` values of this Point object to the given values.
+    * If you omit the `y` value then the `x` value will be applied to both, for example:
+    * `Point.set(2)` is the same as `Point.set(2, 2)`
+    *
+    * @method Phaser.Point#set
+    * @param {number} x - The horizontal value of this point.
+    * @param {number} [y] - The vertical value of this point. If not given the x value will be used in its place.
+    * @return {Phaser.Point} This Point object. Useful for chaining method calls.
+    */
+    set: function (x, y) {
+
+        this.x = x || 0;
+        this.y = y || ( (y !== 0) ? this.x : 0 );
+
+        return this;
+
+    }
+
+};
     if (typeof exports !== 'undefined') {
         if (typeof module !== 'undefined' && module.exports) {
             exports = module.exports = PhaserMicro;
