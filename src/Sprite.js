@@ -30,7 +30,7 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.worldTransform = new PhaserMicro.Matrix();
 
-    this.tint = 0xffffff;
+    this.tint = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
 
     this.blendMode = PhaserMicro.BLEND_NORMAL;
 
@@ -199,5 +199,6 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
         }
 
     },
+
 
 });

@@ -409,7 +409,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x0;
         verts[i++] = uvs.y0;
         verts[i++] = alpha;
-        verts[i++] = tint;
+        verts[i++] = tint[0];
 
         //  Top Right vert (xy, uv, color)
         verts[i++] = a * w0 + c * h1 + tx;
@@ -417,7 +417,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x1;
         verts[i++] = uvs.y1;
         verts[i++] = alpha;
-        verts[i++] = tint;
+        verts[i++] = tint[1];
 
         //  Bottom Right vert (xy, uv, color)
         verts[i++] = a * w0 + c * h0 + tx;
@@ -425,7 +425,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x2;
         verts[i++] = uvs.y2;
         verts[i++] = alpha;
-        verts[i++] = tint;
+        verts[i++] = tint[2];
 
         //  Bottom Left vert (xy, uv, color)
         verts[i++] = a * w1 + c * h0 + tx;
@@ -433,7 +433,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x3;
         verts[i++] = uvs.y3;
         verts[i++] = alpha;
-        verts[i++] = tint;
+        verts[i++] = tint[3];
         
         // PhaserMicro.log('added to batch array');
 
