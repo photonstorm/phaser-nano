@@ -8,6 +8,7 @@ Phaser Micro is a highly optimized and absolute bare minimum version of its pare
 
 * Currently only 5.9KB (min/gz) / 17.9KB (min)
 * WebGL Renderer with Sprite Batch support
+* Canvas Renderer
 * Asset Loader inc. parallel download streams
 * Asset Cache
 * Sprites with Position, Scale, Anchor, Rotation and Pivot
@@ -22,7 +23,7 @@ Phaser Micro is a highly optimized and absolute bare minimum version of its pare
 ## Features (Planned)
 
 * Texture Atlas support (JSON only)
-* Canvas Renderer
+* Canvas Blend Modes
 * World object
 * Layers
 * Group (super tiny / minimum build)
@@ -31,6 +32,7 @@ Phaser Micro is a highly optimized and absolute bare minimum version of its pare
 * Input support (maybe Mouse / Pointer only)
 * Loader callbacks (for progress events)
 * Investigate bare minimum physics implementation (and keep optional)
+* Game background color
 
 ![div](http://www.phaser.io/images/github/div.png)
 
