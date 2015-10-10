@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Phaser Micro</title>
+    <script src="../src/Game.js"></script>
+    <script src="../src/WebGL.js"></script>
+    <script src="../src/Canvas.js"></script>
+    <script src="../src/Loader.js"></script>
+    <script src="../src/Cache.js"></script>
+    <script src="../src/Texture.js"></script>
+    <script src="../src/Sprite.js"></script>
+    <script src="../src/Matrix.js"></script>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var game = new PhaserMicro.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update });
+
+    function preload () {
+
+        game.pixelArt = true;
+
+        game.load.image('sky', 'assets/sky2.png');
+        game.load.image('diamonds', 'assets/diamonds32x24x5.png');
+
+    }
+
+    function create() {
+
+        //  Want the ability to just render images directly without sprites
+        game.addChild(0, 0, 'sky');
+
+        var sprite;
+
+        for (var i = 0; i < 500; i++)
+        {
+            var x = Math.random() * game.width;
+            var y = Math.random() * game.height;
+
+            sprite = game.addChild(x, y, 'diamonds');
+
+            var f = Math.round(Math.random() * 5) * 32;
+            sprite.texture.frame.x = f;
+            sprite.texture.frame.width = 32;
+
+            sprite.texture.updateUVs();
+        }
+
+    }
+
+    function update() {
+
+    }
+
+</script>
+
+</body>
+</html>
