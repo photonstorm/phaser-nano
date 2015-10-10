@@ -12,6 +12,8 @@ Phaser Micro is a highly optimized and absolute bare minimum version of its pare
 * Asset Cache
 * Sprites with Position, Scale, Anchor, Rotation and Pivot
 * Sprite Sheet support (fixed frame)
+* Blend Modes: ADD, MULTIPLY, SCREEN
+* Pixel Art mode support (applied on a game level)
 * Minimal Geometry (Point, Rectangle, Matrix)
 
 ## Features (Planned)
