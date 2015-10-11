@@ -6,7 +6,7 @@ Phaser Micro is a highly optimized and bare minimum version of its parent framew
 
 ## Features
 
-* Currently only 5.9KB (min/gz) / 17.9KB (min)
+* Currently only 6.4KB (min/gz) / 19.7KB (min)
 * WebGL Renderer with Sprite Batch support
 * Canvas Renderer
 * Asset Loader inc. parallel download streams
