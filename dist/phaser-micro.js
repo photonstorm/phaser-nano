@@ -27,6 +27,8 @@ PhaserMicro.BLEND_SCREEN = 3;
 PhaserMicro.LINEAR = 0;
 PhaserMicro.NEAREST = 1;
 
+PhaserMicro.TINT = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
+
 PhaserMicro.PI_2 = Math.PI * 2;
 PhaserMicro.RAD_TO_DEG = 180 / Math.PI;
 PhaserMicro.DEG_TO_RAD = Math.PI / 180;
@@ -52,8 +54,6 @@ PhaserMicro.log = function (text, color, bg) {
 };
 
 PhaserMicro.Game = function (width, height, renderer, parent, state) {
-
-    PhaserMicro.log('/// PhaserMicro v1.0 ///', '#91c6fa', '#0054a6');
 
     this.parent = parent || '';
     this.width = width || 800;
@@ -119,6 +119,8 @@ PhaserMicro.Game.prototype = {
 
     init: function () {
 
+        this.showHeader();
+
         this.cache = new PhaserMicro.Cache(this);
         this.load = new PhaserMicro.Loader(this);
 
@@ -129,6 +131,7 @@ PhaserMicro.Game.prototype = {
         this.canvas.height = this.height;
 
         //  TODO: WebGL / Canvas switch
+        // this.renderer = new PhaserMicro.Canvas(this);
         this.renderer = new PhaserMicro.WebGL(this);
         this.renderer.boot();
 
@@ -152,6 +155,28 @@ PhaserMicro.Game.prototype = {
         {
             this.start();
         }
+
+    },
+
+    showHeader: function () {
+
+        if (window['PhaserGlobal'] && window['PhaserGlobal'].hideBanner)
+        {
+            return;
+        }
+
+        var v = PhaserMicro.VERSION;
+
+        var args = [
+            '%c %c %c %c %c  PhaserMicro v' + v + ' - http://phaser.io  ',
+            'background: #ff0000',
+            'background: #ffff00',
+            'background: #00ff00',
+            'background: #00ffff',
+            'color: #ffffff; background: #000;'
+        ];
+        
+        console.log.apply(console, args);
 
     },
 
@@ -270,18 +295,13 @@ PhaserMicro.WebGL = function (game) {
     this.vertices = new Float32Array(this.batchSize * 4 * this.vertSize);
     this.indices = new Uint16Array(this.batchSize * 6);
 
+    this._blitMatrix = new PhaserMicro.Matrix();
+
     this._size = 0;
     this._batch = [];
     this._base = null;
 
     this.dirty = true;
-
-    // this.lastIndexCount = 0;
-    // this.drawCount = 0;
-    // this.drawing = false;
-    // this.offset = { x: 0, y: 0 };
-    // this.textures = [];
-    // this._UID = 0;
 
 };
 
@@ -505,15 +525,15 @@ PhaserMicro.WebGL.prototype = {
 
         if (this._size >= this.batchSize)
         {
-            // PhaserMicro.log('flush 1');
             this.flush();
             this._base = texture.baseTexture;
         }
 
-        var uvs = texture._uvs;
+        //  Allow as argument (along with scale and rotation?)
         var alpha = 1;
-        var tint = 0xffffff;
 
+        /*
+        //  Not needed unless we allow them to set the anchor
         var aX = 0;
         var aY = 0;
 
@@ -522,71 +542,30 @@ PhaserMicro.WebGL.prototype = {
 
         var h0 = texture.frame.height * (1 - aY);
         var h1 = texture.frame.height * -aY;
+        */
 
-        //  Merge scale values in here
-        var a = 1;
-        var b = 0;
-        var c = 0;
-        var d = 1;
-        var tx = x;
-        var ty = y;
+        var w0 = texture.frame.width;
+        var w1 = texture.frame.width;
+        var h0 = texture.frame.height;
+        var h1 = texture.frame.height;
 
-        var verts = this.vertices;
-        var i = this._size * 4 * this.vertSize;
+        this._blitMatrix.set(1, 0, 0, 1, x, y);
 
-        //  Top Left vert (xy, uv, color)
-        verts[i++] = a * w1 + c * h1 + tx;
-        verts[i++] = d * h1 + b * w1 + ty;
-        verts[i++] = uvs.x0;
-        verts[i++] = uvs.y0;
-        verts[i++] = alpha;
-        verts[i++] = tint;
+        this.addVerts(texture._uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserMicro.TINT);
 
-        //  Top Right vert (xy, uv, color)
-        verts[i++] = a * w0 + c * h1 + tx;
-        verts[i++] = d * h1 + b * w0 + ty;
-        verts[i++] = uvs.x1;
-        verts[i++] = uvs.y1;
-        verts[i++] = alpha;
-        verts[i++] = tint;
-
-        //  Bottom Right vert (xy, uv, color)
-        verts[i++] = a * w0 + c * h0 + tx;
-        verts[i++] = d * h0 + b * w0 + ty;
-        verts[i++] = uvs.x2;
-        verts[i++] = uvs.y2;
-        verts[i++] = alpha;
-        verts[i++] = tint;
-
-        //  Bottom Left vert (xy, uv, color)
-        verts[i++] = a * w1 + c * h0 + tx;
-        verts[i++] = d * h0 + b * w1 + ty;
-        verts[i++] = uvs.x3;
-        verts[i++] = uvs.y3;
-        verts[i++] = alpha;
-        verts[i++] = tint;
-        
-        //  Increment the batchsize
-        this._batch[this._size++] = { blendMode: 0, texture: texture };
+        this._batch[this._size++] = texture;
 
     },
 
     renderSprite: function (sprite) {
 
-        // PhaserMicro.log('renderSprite');
-
         var texture = sprite.texture;
         
         if (this._size >= this.batchSize)
         {
-            // PhaserMicro.log('flush 1');
             this.flush();
             this._base = texture.baseTexture;
         }
-
-        var uvs = texture._uvs;
-        var alpha = sprite.worldAlpha;
-        var tint = sprite.tint;
 
         var aX = sprite.anchor.x;
         var aY = sprite.anchor.y;
@@ -620,7 +599,13 @@ PhaserMicro.WebGL.prototype = {
         }
         */
 
-        var wt = sprite.worldTransform;
+        this.addVerts(texture._uvs, sprite.worldTransform, w0, h0, w1, h1, sprite.worldAlpha, sprite.tint);
+
+        this._batch[this._size++] = texture;
+
+    },
+
+    addVerts: function (uvs, wt, w0, h0, w1, h1, alpha, tint) {
 
         var a = wt.a;
         var b = wt.b;
@@ -638,7 +623,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x0;
         verts[i++] = uvs.y0;
         verts[i++] = alpha;
-        verts[i++] = tint;
+        verts[i++] = tint[0];
 
         //  Top Right vert (xy, uv, color)
         verts[i++] = a * w0 + c * h1 + tx;
@@ -646,7 +631,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x1;
         verts[i++] = uvs.y1;
         verts[i++] = alpha;
-        verts[i++] = tint;
+        verts[i++] = tint[1];
 
         //  Bottom Right vert (xy, uv, color)
         verts[i++] = a * w0 + c * h0 + tx;
@@ -654,7 +639,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x2;
         verts[i++] = uvs.y2;
         verts[i++] = alpha;
-        verts[i++] = tint;
+        verts[i++] = tint[2];
 
         //  Bottom Left vert (xy, uv, color)
         verts[i++] = a * w1 + c * h0 + tx;
@@ -662,12 +647,7 @@ PhaserMicro.WebGL.prototype = {
         verts[i++] = uvs.x3;
         verts[i++] = uvs.y3;
         verts[i++] = alpha;
-        verts[i++] = tint;
-        
-        // PhaserMicro.log('added to batch array');
-
-        // increment the batchsize
-        this._batch[this._size++] = sprite;
+        verts[i++] = tint[3];
 
     },
 
@@ -679,16 +659,12 @@ PhaserMicro.WebGL.prototype = {
             return;
         }
 
-        // PhaserMicro.log('flush');
-
         var gl = this.gl;
 
         if (this.dirty)
         {
             //  Always dirty the first pass through
             //  but subsequent calls may be clean
-            // PhaserMicro.log('flush dirty');
-
             this.dirty = false;
 
             // bind the main texture
@@ -714,12 +690,10 @@ PhaserMicro.WebGL.prototype = {
         //  Upload the verts to the buffer
         if (this._size > (this.batchSize * 0.5))
         {
-            // PhaserMicro.log('flush verts 1');
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
         }
         else
         {
-            // PhaserMicro.log('flush verts 2');
             var view = this.vertices.subarray(0, this._size * 4 * this.vertSize);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
         }
@@ -727,21 +701,17 @@ PhaserMicro.WebGL.prototype = {
         var start = 0;
         var currentSize = 0;
 
-        var texture = { source: null };
-        var nextTexture = null;
+        var base = { source: null };
+        var nextBase = null;
 
         var blend = -1;
         var nextBlend = null;
 
-        var sprite;
-
         for (var i = 0; i < this._size; i++)
         {
-            //  Could be a sprite OR a texture
-            sprite = this._batch[i];
-
-            nextTexture = sprite.texture.baseTexture;
-            nextBlend = sprite.blendMode;
+            //  _batch[i] contains the next texture to be rendered
+            nextBase = this._batch[i].baseTexture;
+            nextBlend = this._batch[i].blendMode;
 
             if (blend !== nextBlend)
             {
@@ -764,20 +734,17 @@ PhaserMicro.WebGL.prototype = {
                 }
             }
 
-            if (texture.source !== nextTexture.source)
+            if (base.source !== nextBase.source)
             {
-                // PhaserMicro.log('texture !== next');
-
                 if (currentSize > 0)
                 {
-                    // console.log('draw1', currentSize);
-                    gl.bindTexture(gl.TEXTURE_2D, texture._gl[gl.id]);
+                    gl.bindTexture(gl.TEXTURE_2D, base._gl[gl.id]);
                     gl.drawElements(gl.TRIANGLES, currentSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
                 }
 
                 start = i;
                 currentSize = 0;
-                texture = nextTexture;
+                base = nextBase;
             }
 
             currentSize++;
@@ -785,8 +752,7 @@ PhaserMicro.WebGL.prototype = {
 
         if (currentSize > 0)
         {
-            // console.log('draw2', currentSize);
-            gl.bindTexture(gl.TEXTURE_2D, texture._gl[gl.id]);
+            gl.bindTexture(gl.TEXTURE_2D, base._gl[gl.id]);
             gl.drawElements(gl.TRIANGLES, currentSize * 6, gl.UNSIGNED_SHORT, start * 6 * 2);
         }
 
@@ -881,6 +847,16 @@ PhaserMicro.Canvas = function (game) {
 
     this.game = game;
     this.canvas = game.canvas;
+    this.context = null;
+
+    this.width = game.width;
+    this.height = game.height;
+
+    this.smoothProperty = null;
+
+    //  Temporary - will move to a World container
+    this.worldAlpha = 1;
+    this.worldTransform = new PhaserMicro.Matrix();
 
 };
 
@@ -890,15 +866,136 @@ PhaserMicro.Canvas.prototype = {
 
         this.context = this.canvas.getContext("2d", { alpha: false });
 
+        this.smoothProperty = this.getSmoothingPrefix();
+
+        PhaserMicro.log('initCanvas');
+
     },
 
     render: function () {
 
-        this.context.clearRect(0, 0, this.width, this.height);
+        //  Transparent
+        // this.context.clearRect(0, 0, this.width, this.height);
 
-        this.renderDisplayObject(this.root, this.projection);
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
 
-    }
+        this.context.globalAlpha = 1;
+
+        this.context.globalCompositeOperation = 'source-over';
+
+        //  Black
+        this.context.fillStyle = '#000';
+        this.context.fillRect(0, 0, this.width, this.height);
+
+        var sprite;
+
+        for (var i = 0; i < this.game.children.length; i++)
+        {
+            sprite = this.game.children[i];
+
+            sprite.updateTransform();
+
+            if (sprite.visible && sprite.worldAlpha > 0)
+            {
+                this.renderSprite(sprite);
+            }
+        }
+
+        //  External render hook (BEFORE the batch flush!)
+        if (this.game.state.render)
+        {
+            this.game.state.render.call(this.game.state, this);
+        }
+
+    },
+
+    blit: function (x, y, texture) {
+
+        //  Allow for pixel rounding
+        if (this.game.pixelArt)
+        {
+            x | 0;
+            y | 0;
+        }
+
+        this.context.setTransform(1, 0, 0, 1, x, y);
+
+        var frame = texture.frame;
+
+        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserMicro.LINEAR || !this.game.pixelArt);
+
+        var dx = -texture.frame.width;
+        var dy = -texture.frame.height;
+
+        this.context.drawImage(texture.baseTexture.source, frame.x, frame.y, frame.width, frame.height, dx, dy, frame.width, frame.height);
+
+    },
+
+    renderSprite: function (sprite) {
+
+        // if (sprite.blendMode !== this.currentBlendMode)
+        // {
+        //     this.currentBlendMode = sprite.blendMode;
+        //     this.context.globalCompositeOperation = sprite.blendMode;
+        // }
+
+        this.context.globalAlpha = sprite.worldAlpha;
+
+        var wt = sprite.worldTransform;
+        var tx = wt.tx;
+        var ty = wt.ty;
+
+        //  Allow for pixel rounding
+        if (this.game.pixelArt)
+        {
+            tx | 0;
+            ty | 0;
+        }
+
+        this.context.setTransform(wt.a, wt.b, wt.c, wt.d, tx, ty);
+
+        var texture = sprite.texture;
+        var frame = texture.frame;
+
+        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserMicro.LINEAR || !this.game.pixelArt);
+
+        var dx = sprite.anchor.x * -texture.frame.width;
+        var dy = sprite.anchor.y * -texture.frame.height;
+
+        // var dx = (this.texture.trim) ? this.texture.trim.x - this.anchor.x * this.texture.trim.width : this.anchor.x * -this.texture.frame.width;
+        // var dy = (this.texture.trim) ? this.texture.trim.y - this.anchor.y * this.texture.trim.height : this.anchor.y * -this.texture.frame.height;
+
+        this.context.drawImage(texture.baseTexture.source, frame.x, frame.y, frame.width, frame.height, dx, dy, frame.width, frame.height);
+
+        // for (var i = 0; i < sprite.children.length; i++)
+        // {
+        //     this.renderSprite(sprite.children[i]);
+        // }
+
+    },
+
+    loadTexture: function (base) {
+        // Skipped for Canvas
+    },
+
+    getSmoothingPrefix: function () {
+
+        var vendor = [ 'i', 'webkitI', 'msI', 'mozI', 'oI' ];
+
+        for (var prefix in vendor)
+        {
+            var s = vendor[prefix] + 'mageSmoothingEnabled';
+
+            if (s in this.context)
+            {
+                return s;
+            }
+        }
+
+        return null;
+
+    },
+
 
 };
 
@@ -1404,6 +1501,8 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 
     this.baseTexture = baseTexture;
 
+    this.blendMode = PhaserMicro.BLEND_NORMAL;
+
     this._frame = -1;
 
     this.frame = new PhaserMicro.Rectangle();
@@ -1508,10 +1607,14 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.rotation = 0;
 
+    this.alive = true;
+
     this.visible = true;
 
+    //  Needed?
     this.renderable = true;
 
+    //  The parent display object (Layer, other Sprite, World)
     this.parent = null;
 
     this.worldAlpha = 1;
@@ -1519,9 +1622,7 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.worldTransform = new PhaserMicro.Matrix();
 
-    this.tint = 0xffffff;
-
-    this.blendMode = PhaserMicro.BLEND_NORMAL;
+    this.tint = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
 
     this.texture = new PhaserMicro.Texture(game.cache.getTexture(key), frame);
 
@@ -1689,6 +1790,19 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
 
     },
 
+    'blendMode': {
+
+        get: function() {
+            return this.texture.blendMode;
+        },
+
+        set: function(value) {
+            this.texture.blendMode = value;
+        }
+
+    },
+
+
 });
 
 /**
@@ -1706,6 +1820,23 @@ PhaserMicro.Matrix = function() {
     this.d = 1;
     this.tx = 0;
     this.ty = 0;
+
+};
+
+PhaserMicro.Matrix.prototype = {
+
+    set: function (a, b, c, d, tx, ty) {
+
+        this.a = a;
+        this.b = b;
+        this.c = c;
+        this.d = d;
+        this.tx = tx;
+        this.ty = ty;
+
+        return this;
+
+    }
 
 };
 

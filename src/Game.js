@@ -44,8 +44,6 @@ PhaserMicro.log = function (text, color, bg) {
 
 PhaserMicro.Game = function (width, height, renderer, parent, state) {
 
-    PhaserMicro.log('/// PhaserMicro v1.0 ///', '#91c6fa', '#0054a6');
-
     this.parent = parent || '';
     this.width = width || 800;
     this.height = height || 600;
@@ -110,6 +108,8 @@ PhaserMicro.Game.prototype = {
 
     init: function () {
 
+        this.showHeader();
+
         this.cache = new PhaserMicro.Cache(this);
         this.load = new PhaserMicro.Loader(this);
 
@@ -144,6 +144,28 @@ PhaserMicro.Game.prototype = {
         {
             this.start();
         }
+
+    },
+
+    showHeader: function () {
+
+        if (window['PhaserGlobal'] && window['PhaserGlobal'].hideBanner)
+        {
+            return;
+        }
+
+        var v = PhaserMicro.VERSION;
+
+        var args = [
+            '%c %c %c %c %c  PhaserMicro v' + v + ' - http://phaser.io  ',
+            'background: #ff0000',
+            'background: #ffff00',
+            'background: #00ff00',
+            'background: #00ffff',
+            'color: #ffffff; background: #000;'
+        ];
+        
+        console.log.apply(console, args);
 
     },
 
