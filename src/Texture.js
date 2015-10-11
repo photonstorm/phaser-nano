@@ -11,6 +11,8 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 
     this.baseTexture = baseTexture;
 
+    this.blendMode = PhaserMicro.BLEND_NORMAL;
+
     this._frame = -1;
 
     this.frame = new PhaserMicro.Rectangle();

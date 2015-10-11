@@ -16,6 +16,8 @@ PhaserMicro.BLEND_SCREEN = 3;
 PhaserMicro.LINEAR = 0;
 PhaserMicro.NEAREST = 1;
 
+PhaserMicro.TINT = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
+
 PhaserMicro.PI_2 = Math.PI * 2;
 PhaserMicro.RAD_TO_DEG = 180 / Math.PI;
 PhaserMicro.DEG_TO_RAD = Math.PI / 180;

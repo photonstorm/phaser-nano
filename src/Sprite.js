@@ -36,8 +36,6 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.tint = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
 
-    this.blendMode = PhaserMicro.BLEND_NORMAL;
-
     this.texture = new PhaserMicro.Texture(game.cache.getTexture(key), frame);
 
     this._width = this.texture.width;
@@ -200,6 +198,18 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
 
         set: function(value) {
             this.texture.setFrame(value);
+        }
+
+    },
+
+    'blendMode': {
+
+        get: function() {
+            return this.texture.blendMode;
+        },
+
+        set: function(value) {
+            this.texture.blendMode = value;
         }
 
     },
