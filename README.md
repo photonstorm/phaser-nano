@@ -34,6 +34,7 @@ Phaser Micro is a highly optimized and bare minimum version of its parent framew
 * Loader callbacks (for progress events)
 * Investigate bare minimum physics implementation (and keep optional)
 * Game background color
+* Texture.fromCanvas (then can use it for basic Text support)
 * Probably rename from Phaser Micro to Phaser Nano
 
 ![div](http://www.phaser.io/images/github/div.png)
