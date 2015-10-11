@@ -19,10 +19,14 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.rotation = 0;
 
+    this.alive = true;
+
     this.visible = true;
 
+    //  Needed?
     this.renderable = true;
 
+    //  The parent display object (Layer, other Sprite, World)
     this.parent = null;
 
     this.worldAlpha = 1;

@@ -1,10 +1,10 @@
 # Phaser Micro
 
-Phaser is a fast, free and fun open source HTML5 game framework. It uses [Pixi.js](https://github.com/GoodBoyDigital/pixi.js/) for WebGL and Canvas rendering across desktop and mobile web browsers.
+Phaser is a fast, free and fun open source HTML5 game framework used by thousands of developers worldwide. It uses [Pixi.js](https://github.com/GoodBoyDigital/pixi.js/) for WebGL and Canvas rendering across desktop and mobile web browsers.
 
-Phaser Micro is a highly optimized and absolute bare minimum version of its parent framework. Designed specifically to be extremely powerful and flexible, but small enough to be used in super-low byte size environments such as banner ads and interstitials.
+Phaser Micro is a highly optimized and bare minimum version of its parent framework. Designed specifically for super low file size environments such as banner ads and interstitials, yet still extremely powerful and flexible. It retains the same approach towards ease-of-use that makes Phaser so popular.
 
-## Features (Done)
+## Features
 
 * Currently only 5.9KB (min/gz) / 17.9KB (min)
 * WebGL Renderer with Sprite Batch support
@@ -21,18 +21,20 @@ Phaser Micro is a highly optimized and absolute bare minimum version of its pare
 * Texture Blitting (render textures directly without needing Sprites)
 * Groups (pool and recycle objects in a Group, unlike Phaser they are no longer display related)
 
-## Features (Planned)
+## TODO
 
 * Texture Atlas support (JSON only)
+* Texture crop support
 * Canvas Blend Modes
-* World object
-* Layer (combo of a Group and a Sprite, where it is the parent of it's children)
+* World object (a Layer?)
+* Layer (combo of a Group and a Sprite, a parent of children that lives on the display list)
 * Tweens (bare minimum build)
 * Delta Timer
 * Input support (maybe Mouse / Pointer only)
 * Loader callbacks (for progress events)
 * Investigate bare minimum physics implementation (and keep optional)
 * Game background color
+* Consolidate renderSprite and blit functions
 * Probably rename from Phaser Micro to Phaser Nano
 
 ![div](http://www.phaser.io/images/github/div.png)
