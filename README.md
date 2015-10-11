@@ -15,24 +15,25 @@ Phaser Micro is a highly optimized and absolute bare minimum version of its pare
 * Sprite Sheet support (fixed frame)
 * Sprite Alpha
 * Per vertex Sprite tint
-* Blend Modes: ADD, MULTIPLY, SCREEN
+* WebGL Blend Modes: ADD, MULTIPLY and SCREEN
 * Pixel Art mode support
 * Geometry (Point, Rectangle, Matrix)
-* Texture Blitting (render textures without parent Sprites)
+* Texture Blitting (render textures directly without needing Sprites)
+* Groups (pool and recycle objects in a Group, unlike Phaser they are no longer display related)
 
 ## Features (Planned)
 
 * Texture Atlas support (JSON only)
 * Canvas Blend Modes
 * World object
-* Layers
-* Group (super tiny / minimum build)
+* Layer (combo of a Group and a Sprite, where it is the parent of it's children)
 * Tweens (bare minimum build)
 * Delta Timer
 * Input support (maybe Mouse / Pointer only)
 * Loader callbacks (for progress events)
 * Investigate bare minimum physics implementation (and keep optional)
 * Game background color
+* Probably rename from Phaser Micro to Phaser Nano
 
 ![div](http://www.phaser.io/images/github/div.png)
 
