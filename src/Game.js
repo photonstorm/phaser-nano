@@ -118,8 +118,8 @@ PhaserMicro.Game.prototype = {
         this.canvas.height = this.height;
 
         //  TODO: WebGL / Canvas switch
-        this.renderer = new PhaserMicro.Canvas(this);
-        // this.renderer = new PhaserMicro.WebGL(this);
+        // this.renderer = new PhaserMicro.Canvas(this);
+        this.renderer = new PhaserMicro.WebGL(this);
         this.renderer.boot();
 
         this.addToDOM();

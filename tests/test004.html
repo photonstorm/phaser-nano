@@ -29,10 +29,13 @@
 
     }
 
+    var ships;
+
     function create() {
 
-        //  Want the ability to just render images directly without sprites
         game.addChild(0, 0, 'sky');
+
+        ships = new PhaserMicro.Group(game);
 
         var sprite;
 
@@ -44,11 +47,33 @@
             sprite.rotation = 45 * PhaserMicro.DEG_TO_RAD;
             sprite.scale.x = 2;
             sprite.scale.y = 2;
+            ships.add(sprite);
         }
+
+        console.log(ships);
 
     }
 
     function update() {
+
+        ships.forEach(move, this);
+
+    }
+
+    function move(ship) {
+
+        ship.x -= 2;
+        ship.y += 2;
+
+        if (ship.x < -64)
+        {
+            ship.x = 864;
+        }
+
+        if (ship.y > 600)
+        {
+            ship.y = -64;
+        }
 
     }
 
