@@ -149,7 +149,7 @@ PhaserMicro.Cache.prototype = {
 
         for (var i = 0; i < total; i++)
         {
-            frames.push(new PhaserMicro.Rectangle(x, y, frameWidth, frameHeight));
+            frames.push(new PhaserMicro.Frame(i, x, y, frameWidth, frameHeight));
 
             x += frameWidth + spacing;
 

@@ -14,7 +14,7 @@
 * @param {number} y - Y position of the frame within the texture image.
 * @param {number} width - Width of the frame within the texture image.
 * @param {number} height - Height of the frame within the texture image.
-* @param {string} name - The name of the frame. In Texture Atlas data this is usually set to the filename.
+* @param {string} [name] - The name of the frame. In Texture Atlas data this is usually set to the filename.
 */
 PhaserMicro.Frame = function (index, x, y, width, height, name) {
 
@@ -46,19 +46,13 @@ PhaserMicro.Frame = function (index, x, y, width, height, name) {
     /**
     * @property {string} name - Useful for Texture Atlas files (is set to the filename value).
     */
-    this.name = name;
+    this.name = name || '';
 
     /**
-    * @property {boolean} rotated - Rotated?
+    * @property {number} rotation - If the frame is rotated this holds the amount of rotation to be applied.
     * @default
     */
-    this.rotated = false;
-
-    /**
-    * @property {string} rotationDirection - Either 'cw' or 'ccw', rotation is always 90 degrees.
-    * @default 'cw'
-    */
-    this.rotationDirection = 'cw';
+    this.rotation = 0;
 
     /**
     * @property {boolean} trimmed - Was it trimmed when packed?
@@ -100,44 +94,43 @@ PhaserMicro.Frame = function (index, x, y, width, height, name) {
     */
     this.spriteSourceSizeH = 0;
 
-    /**
-    * @property {number} right - The right of the Frame (x + width).
-    */
-    // this.right = this.x + this.width;
-
-    /**
-    * @property {number} bottom - The bottom of the frame (y + height).
-    */
-    // this.bottom = this.y + this.height;
-
 };
 
-Phaser.Frame.prototype = {
+PhaserMicro.Frame.prototype = {
 
     /**
     * If the frame was trimmed when added to the Texture Atlas this records the trim and source data.
     *
     * @method Phaser.Frame#setTrim
-    * @param {boolean} trimmed - If this frame was trimmed or not.
-    * @param {number} actualWidth - The width of the frame before being trimmed.
-    * @param {number} actualHeight - The height of the frame before being trimmed.
+    * @param {number} width - The actual width of the frame before being trimmed.
+    * @param {number} height - The actual height of the frame before being trimmed.
     * @param {number} destX - The destination X position of the trimmed frame for display.
     * @param {number} destY - The destination Y position of the trimmed frame for display.
     * @param {number} destWidth - The destination width of the trimmed frame for display.
     * @param {number} destHeight - The destination height of the trimmed frame for display.
     */
-    setTrim: function (trimmed, actualWidth, actualHeight, destX, destY, destWidth, destHeight) {
+    setTrim: function (width, height, destX, destY, destWidth, destHeight) {
 
-        this.trimmed = trimmed;
+        this.trimmed = true;
 
-        if (trimmed)
+        this.sourceSizeW = width;
+        this.sourceSizeH = height;
+        this.spriteSourceSizeX = destX;
+        this.spriteSourceSizeY = destY;
+        this.spriteSourceSizeW = destWidth;
+        this.spriteSourceSizeH = destHeight;
+
+    },
+
+    setRotation: function (direction) {
+
+        if (direction === 'cw')
         {
-            this.sourceSizeW = actualWidth;
-            this.sourceSizeH = actualHeight;
-            this.spriteSourceSizeX = destX;
-            this.spriteSourceSizeY = destY;
-            this.spriteSourceSizeW = destWidth;
-            this.spriteSourceSizeH = destHeight;
+            this.rotation = 90;
+        }
+        else if (direction === 'ccw')
+        {
+            this.rotation = -90;
         }
 
     }
