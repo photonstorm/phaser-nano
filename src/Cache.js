@@ -16,32 +16,16 @@ PhaserMicro.Cache = function (game) {
 
 PhaserMicro.Cache.prototype = {
 
-    //  These two methods are very similar, let's see if we can consolidate
+    addImage: function (key, url, data, frameWidth, frameHeight, frameMax, margin, spacing) {
 
-    addImage: function (key, url, data) {
-
-        var obj = {
-            key: key,
-            url: url,
-            data: data,
-            base: new PhaserMicro.BaseTexture(data, [new PhaserMicro.Rectangle(0, 0, data.width, data.height)])
-        };
-
-        if (this.game.pixelArt)
+        if (frameWidth !== undefined)
         {
-            obj.base.scaleMode = 1;
+            var frames = this.buildSheet(data, frameWidth, frameHeight, frameMax, margin, spacing);
         }
-
-        //  WebGL only
-        this.game.renderer.loadTexture(obj.base);
-
-        this._cache.image[key] = obj;
-
-    },
-
-    addSpriteSheet: function (key, url, data, frameWidth, frameHeight, frameMax, margin, spacing) {
-
-        var frames = this.buildSheet(data, frameWidth, frameHeight, frameMax, margin, spacing);
+        else
+        {
+            var frames = [ new PhaserMicro.Rectangle(0, 0, data.width, data.height) ];
+        }
 
         var obj = {
             key: key,

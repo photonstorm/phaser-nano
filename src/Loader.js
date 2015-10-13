@@ -15,10 +15,11 @@ PhaserMicro.Loader = function (game) {
     this.isLoading = false;
     this.hasLoaded = false;
 
-    this._fileList = [];
-    this._flightQueue = [];
-    this._fileLoadStarted = false;
-    this._totalFileCount = 0;
+    this._list = [];
+    this._queue = [];
+    this._started = false;
+    this._total = 0;
+    this._processingHead = 0;
 
 };
 
@@ -29,10 +30,10 @@ PhaserMicro.Loader.prototype = {
         this.isLoading = false;
         this.hasLoaded = false;
 
-        this._fileList.length = 0;
-        this._flightQueue.length = 0;
-        this._fileLoadStarted = false;
-        this._totalFileCount = 0;
+        this._list.length = 0;
+        this._queue.length = 0;
+        this._started = false;
+        this._total = 0;
         this._processingHead = 0;
 
     },
@@ -77,8 +78,8 @@ PhaserMicro.Loader.prototype = {
             }
         }
 
-        this._fileList.push(file);
-        this._totalFileCount++;
+        this._list.push(file);
+        this._total++;
 
         return this;
 
@@ -96,7 +97,7 @@ PhaserMicro.Loader.prototype = {
         if (margin === undefined) { margin = 0; }
         if (spacing === undefined) { spacing = 0; }
 
-        return this.addToFileList('spritesheet', key, url, { frameWidth: frameWidth, frameHeight: frameHeight, frameMax: frameMax, margin: margin, spacing: spacing }, '.png');
+        return this.addToFileList('spritesheet', key, url, { width: frameWidth, height: frameHeight, max: frameMax, margin: margin, spacing: spacing }, '.png');
 
     },
 
@@ -126,13 +127,13 @@ PhaserMicro.Loader.prototype = {
         }
 
         // Empty the flight queue as applicable
-        for (var i = 0; i < this._flightQueue.length; i++)
+        for (var i = 0; i < this._queue.length; i++)
         {
-            var file = this._flightQueue[i];
+            var file = this._queue[i];
 
             if (file.loaded || file.error)
             {
-                this._flightQueue.splice(i, 1);
+                this._queue.splice(i, 1);
                 i--;
 
                 file.loading = false;
@@ -147,13 +148,13 @@ PhaserMicro.Loader.prototype = {
 
                 this._loadedFileCount++;
                 PhaserMicro.log('File Complete ' + file.key);
-                // this.onFileComplete.dispatch(this.progress, file.key, !file.error, this._loadedFileCount, this._totalFileCount);
+                // this.onFileComplete.dispatch(this.progress, file.key, !file.error, this._loadedFileCount, this._total);
             }
         }
 
-        for (var i = this._processingHead; i < this._fileList.length; i++)
+        for (var i = this._processingHead; i < this._list.length; i++)
         {
-            var file = this._fileList[i];
+            var file = this._list[i];
 
             if (file.loaded || file.error)
             {
@@ -163,23 +164,23 @@ PhaserMicro.Loader.prototype = {
                     this._processingHead = i + 1;
                 }
             }
-            else if (!file.loading && this._flightQueue.length < 4)
+            else if (!file.loading && this._queue.length < 4)
             {
                 // -> not loaded/failed, not loading
-                if (!this._fileLoadStarted)
+                if (!this._started)
                 {
-                    this._fileLoadStarted = true;
+                    this._started = true;
                     // this.onLoadStart.dispatch();
                 }
 
-                this._flightQueue.push(file);
+                this._queue.push(file);
                 file.loading = true;
                 // this.onFileStart.dispatch(this.progress, file.key, file.url);
                 this.loadFile(file);
             }
 
             // Stop looking if queue full
-            if (this._flightQueue.length >= 4)
+            if (this._queue.length >= 4)
             {
                 break;
             }
@@ -187,11 +188,11 @@ PhaserMicro.Loader.prototype = {
 
         // True when all items in the queue have been advanced over
         // (There should be no inflight items as they are complete - loaded/error.)
-        if (this._processingHead >= this._fileList.length)
+        if (this._processingHead >= this._list.length)
         {
             this.finishedLoading();
         }
-        else if (!this._flightQueue.length)
+        else if (!this._queue.length)
         {
             // Flight queue is empty but file list is not done being processed.
             // This indicates a critical internal error with no known recovery.
@@ -291,7 +292,7 @@ PhaserMicro.Loader.prototype = {
 
             case 'spritesheet':
 
-                this.cache.addSpriteSheet(file.key, file.url, file.data, file.frameWidth, file.frameHeight, file.frameMax, file.margin, file.spacing);
+                this.cache.addImage(file.key, file.url, file.data, file.width, file.height, file.max, file.margin, file.spacing);
                 break;
         }
 
@@ -331,9 +332,9 @@ PhaserMicro.Loader.prototype = {
         this.isLoading = false;
 
         // If there were no files make sure to trigger the event anyway, for consistency
-        if (!abnormal && !this._fileLoadStarted)
+        if (!abnormal && !this._started)
         {
-            this._fileLoadStarted = true;
+            this._started = true;
             // this.onLoadStart.dispatch();
         }
 
