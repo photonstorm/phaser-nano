@@ -40,13 +40,15 @@ PhaserMicro.FrameData.prototype = {
     * @method Phaser.FrameData#addFrame
     * @param {object} json - The json frame data.
     */
-    add: function (json, width, height) {
+    add: function (json, width, height, name) {
+
+        // console.log('FrameData.add', name, json);
 
         var i = this._frames.length;
 
         var rect = json.frame;
 
-        var newFrame = new PhaserMicro.Frame(i, rect.x, rect.y, rect.w, rect.h, json.filename);
+        var newFrame = new PhaserMicro.Frame(i, rect.x, rect.y, rect.w, rect.h, name);
 
         if (json.trimmed)
         {
@@ -63,8 +65,33 @@ PhaserMicro.FrameData.prototype = {
         this._indexes.push(this._frames[i]);
 
         //  String mapping
-        this._names[frame.name] = this._frames[i];
+        this._names[name] = this._frames[i];
 
     },
+
+    getFrame: function (value) {
+
+        if (typeof value === 'number')
+        {
+            return this._indexes[value];
+        }
+        else
+        {
+            return this._names[value];
+        }
+
+    },
+
+    getFrameIndex: function (value) {
+
+        return this._indexes[value];
+
+    },
+
+    getFrameName: function (value) {
+
+        return this._names[value];
+
+    }
 
 };

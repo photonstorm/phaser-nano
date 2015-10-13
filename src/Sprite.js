@@ -193,11 +193,23 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
     'frame': {
 
         get: function() {
-            return this.texture._frame;
+            return this.texture.frame.index;
         },
 
         set: function(value) {
-            this.texture.setFrame(value);
+            this.texture.setFrameByIndex(value);
+        }
+
+    },
+
+    'frameName': {
+
+        get: function() {
+            return this.texture.frame.name;
+        },
+
+        set: function(value) {
+            this.texture.setFrameByName(value);
         }
 
     },

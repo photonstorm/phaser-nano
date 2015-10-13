@@ -72,8 +72,6 @@ PhaserMicro.WebGL.prototype = {
 
         gl.id = 0;
 
-        PhaserMicro.log('initWebGL ' + gl.id);
-
         gl.disable(gl.DEPTH_TEST);
         gl.disable(gl.CULL_FACE);
         gl.enable(gl.BLEND);
@@ -110,8 +108,6 @@ PhaserMicro.WebGL.prototype = {
     },
 
     initShader: function () {
-
-        PhaserMicro.log('initShader', '#ffffff', '#ff0000');
 
         var gl = this.gl;
 
@@ -297,7 +293,7 @@ PhaserMicro.WebGL.prototype = {
 
         this._blitMatrix.set(1, 0, 0, 1, x, y);
 
-        this.addVerts(texture._uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserMicro.TINT);
+        this.addVerts(texture.frame.uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserMicro.TINT);
 
         this._batch[this._size++] = texture;
 
@@ -345,7 +341,7 @@ PhaserMicro.WebGL.prototype = {
         }
         */
 
-        this.addVerts(texture._uvs, sprite.worldTransform, w0, h0, w1, h1, sprite.worldAlpha, sprite.tint);
+        this.addVerts(texture.frame.uvs, sprite.worldTransform, w0, h0, w1, h1, sprite.worldAlpha, sprite.tint);
 
         this._batch[this._size++] = texture;
 

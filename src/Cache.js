@@ -55,9 +55,6 @@ PhaserMicro.Cache.prototype = {
 
     addTextureAtlas: function (key, url, data, json) {
 
-        // console.log(arguments);
-        // var frames = this.buildAtlasData(atlasData);
-
         if (!json['frames'])
         {
             console.warn("Invalid Atlas JSON");
@@ -66,20 +63,20 @@ PhaserMicro.Cache.prototype = {
 
         var width = data.width;
         var height = data.height;
-        var frameData = new PhaserMicro.FrameData(this.game);
+        var frameData = new PhaserMicro.FrameData();
 
         if (Array.isArray(json.frames))
         {
             for (var i = 0; i < json.frames.length; i++)
             {
-                frameData.add(json.frames[i], width, height);
+                frameData.add(json.frames[i], width, height, json.frames[i].filename);
             }
         }
         else
         {
-            for (var key in json.frames)
+            for (var name in json.frames)
             {
-                frameData.add(json.frames[key], width, height);
+                frameData.add(json.frames[name], width, height, name);
             }
         }
 
@@ -140,7 +137,14 @@ PhaserMicro.Cache.prototype = {
 
     getTexture: function (key) {
 
-        return this._cache.image[key].base;
+        if (this._cache.image[key])
+        {
+            return this._cache.image[key].base;
+        }
+        else
+        {
+            console.warn('No texture found matching key', key);
+        }
 
     },
 

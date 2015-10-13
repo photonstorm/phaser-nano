@@ -171,7 +171,6 @@ PhaserMicro.Loader.prototype = {
                 }
 
                 this._loadedFileCount++;
-                PhaserMicro.log('File Complete ' + file.key);
                 // this.onFileComplete.dispatch(this.progress, file.key, !file.error, this._loadedFileCount, this._total);
             }
         }
@@ -483,8 +482,6 @@ PhaserMicro.Loader.prototype = {
         // this.onLoadComplete.dispatch();
 
         this.reset();
-
-        PhaserMicro.log('Load Complete');
 
         this.game.start();
 

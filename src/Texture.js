@@ -13,17 +13,10 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 
     this.blendMode = PhaserMicro.BLEND_NORMAL;
 
-    // this._frame = -1;
-
-    this.frame = new PhaserMicro.Frame();
+    this.frame = this.baseTexture.frameData.getFrame(frame);
 
     this.width = 0;
     this.height = 0;
-
-    //  UV coordinates
-    this._uvs = { x0: 0, y0: 0, x1: 0, y1: 0, x2: 0, y2: 0, x3: 0, y3: 0 };
-
-    this.setFrame(frame);
 
 };
 
@@ -31,24 +24,30 @@ PhaserMicro.Texture.prototype = {
 
     setFrame: function (value) {
 
-        //  Why are they copied all the time?
-        //  I guess so a Texture could have a custom crop? But that doesn't make sense.
-        //  The crop value could be part of the Texture object, not the Frame.
-        //  Trim would be identical no matter which sprite used it.
-        //  Could we precalculate all the UV data too? Save doing the math every frame,
-        //  for every animation, for every sprite.
+        this.frame = this.baseTexture.frameData.getFrame(value);
 
-        var baseFrame = this.baseTexture.frameData[value];
-
-        if (baseFrame && value !== this._frame)
-        {
-            this._frame = value;
-            this.frame.copyFrom(baseFrame);
-            this.updateUVs();
-        }
+        this.uvs = this.frame.uvs;
 
     },
 
+    setFrameByIndex: function (value) {
+
+        this.frame = this.baseTexture.frameData.getFrameIndex(value);
+
+        this.uvs = this.frame.uvs;
+
+    },
+
+    setFrameByName: function (value) {
+
+        this.frame = this.baseTexture.frameData.getFrameName(value);
+
+        this.uvs = this.frame.uvs;
+
+    },
+
+
+    /*
     updateUVs: function () {
 
         //  Swap for 'this.crop' once we add atlas support back in
@@ -69,6 +68,7 @@ PhaserMicro.Texture.prototype = {
         this._uvs.y3 = (frame.y + frame.height) / th;
 
     }
+    */
 
 };
 
