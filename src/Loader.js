@@ -101,6 +101,30 @@ PhaserMicro.Loader.prototype = {
 
     },
 
+    atlas: function (key, textureURL, atlasURL, atlasData) {
+
+        if (!textureURL)
+        {
+            textureURL = key + '.png';
+        }
+
+        if (!atlasURL && !atlasData)
+        {
+            atlasURL = key + '.json';
+        }
+
+        if (typeof atlasData === 'string')
+        {
+            atlasData = JSON.parse(atlasData);
+            atlasURL = null;
+        }
+
+        this.addToFileList('textureatlas', key, textureURL, { atlasURL: atlasURL, atlasData: atlasData });
+
+        return this;
+
+    },
+
     start: function () {
 
         if (this.isLoading)
@@ -213,6 +237,7 @@ PhaserMicro.Loader.prototype = {
         {
             case 'image':
             case 'spritesheet':
+            case 'textureatlas':
                 this.loadImageTag(file);
                 break;
         }
@@ -294,12 +319,129 @@ PhaserMicro.Loader.prototype = {
 
                 this.cache.addImage(file.key, file.url, file.data, file.width, file.height, file.max, file.margin, file.spacing);
                 break;
+
+            case 'textureatlas':
+
+                if (!file.atlasURL)
+                {
+                    this.cache.addTextureAtlas(file.key, file.url, file.data, file.atlasData);
+                }
+                else
+                {
+                    //  Load the JSON before carrying on with the next file
+                    loadNext = false;
+                    this.xhrLoad(file, this.transformUrl(file.atlasURL, file), 'text', this.jsonLoadComplete);
+                }
+                break;
         }
 
         if (loadNext)
         {
             this.asyncComplete(file);
         }
+
+    },
+
+    /**
+    * Starts the xhr loader.
+    *
+    * This is designed specifically to use with asset file processing.
+    *
+    * @method Phaser.Loader#xhrLoad
+    * @private
+    * @param {object} file - The file/pack to load.
+    * @param {string} url - The URL of the file.
+    * @param {string} type - The xhr responseType.
+    * @param {function} onload - The function to call on success. Invoked in `this` context and supplied with `(file, xhr)` arguments.
+    * @param {function} [onerror=fileError]  The function to call on error. Invoked in `this` context and supplied with `(file, xhr)` arguments.
+    */
+    xhrLoad: function (file, url, type, onload, onerror) {
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.responseType = type;
+
+        onerror = onerror || this.fileError;
+
+        var _this = this;
+
+        xhr.onload = function () {
+
+            try {
+
+                return onload.call(_this, file, xhr);
+
+            } catch (e) {
+
+                //  If this was the last file in the queue and an error is thrown in the create method
+                //  then it's caught here, so be sure we don't carry on processing it
+
+                if (!_this.hasLoaded)
+                {
+                    _this.asyncComplete(file, e.message || 'Exception');
+                }
+                else
+                {
+                    if (window['console'])
+                    {
+                        console.error(e);
+                    }
+                }
+            }
+        };
+
+        xhr.onerror = function () {
+
+            try {
+
+                return onerror.call(_this, file, xhr);
+
+            } catch (e) {
+
+                if (!_this.hasLoaded)
+                {
+                    _this.asyncComplete(file, e.message || 'Exception');
+                }
+                else
+                {
+                    if (window['console'])
+                    {
+                        console.error(e);
+                    }
+                }
+
+            }
+        };
+
+        file.requestObject = xhr;
+        file.requestUrl = url;
+
+        xhr.send();
+
+    },
+
+    /**
+    * Successfully loaded a JSON file - only used for certain types.
+    *
+    * @method Phaser.Loader#jsonLoadComplete
+    * @private
+    * @param {object} file - File associated with this request
+    * @param {XMLHttpRequest} xhr
+    */
+    jsonLoadComplete: function (file, xhr) {
+
+        var data = JSON.parse(xhr.responseText);
+
+        if (file.type === 'json')
+        {
+            this.cache.addJSON(file.key, file.url, data);
+        }
+        else
+        {
+            this.cache.addTextureAtlas(file.key, file.url, file.data, data);
+        }
+
+        this.asyncComplete(file);
 
     },
 
