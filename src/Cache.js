@@ -27,6 +27,13 @@ PhaserMicro.Cache.prototype = {
             var frames = [ new PhaserMicro.Rectangle(0, 0, data.width, data.height) ];
         }
 
+        this.addImageEntry(key, url, data, frames);
+
+    },
+
+    //  Private
+    addImageEntry: function (key, url, data, frames) {
+
         var obj = {
             key: key,
             url: url,
@@ -48,68 +55,60 @@ PhaserMicro.Cache.prototype = {
 
     addTextureAtlas: function (key, url, data, atlasData) {
 
-        if (Array.isArray(atlasData.frames))
-        {
-            var frames = this.buildJSONData(this.game, atlasData, key);
-        }
-        else
-        {
-            // var frames = Phaser.AnimationParser.JSONDataHash(this.game, atlasData, key);
-        }
+        console.log(arguments);
 
-        var obj = {
-            key: key,
-            url: url,
-            data: data,
-            base: new PhaserMicro.BaseTexture(data, frames)
-        };
+        var frames = this.buildAtlasData(atlasData);
 
-        if (this.game.pixelArt)
-        {
-            obj.base.scaleMode = 1;
-        }
-
-        //  WebGL only
-        this.game.renderer.loadTexture(obj.base);
-
-        this._cache.image[key] = obj;
+        this.addImageEntry(key, url, data, frames);
 
     },
 
-    buildJSONData: function (json) {
+    buildAtlasData: function (json) {
 
-        //  Malformed?
+        console.log(json);
+
         if (!json['frames'])
         {
-            console.warn("Invalid Atlas JSON. Missing 'frames' array");
+            console.warn("Invalid Atlas JSON");
             return;
         }
 
+        var i = 0;
         var frames = [];
 
-        var frame;
-        var rect;
-        var source;
-        var newFrame;
-
-        for (var i = 0; i < json.frames.length; i++)
+        if (Array.isArray(json.frames))
         {
-            frame = json.frames[i];
-            rect = json.frames[i].frame;
-
-            newFrame = new PhaserMicro.Frame(i, rect.x, rect.y, rect.w, rect.h, frame.filename);
-
-            if (frame.trimmed)
+            for (i = 0; i < json.frames.length; i++)
             {
-                source = frame.spriteSourceSize;
-                //  Could we just set this in the setTrim from the single object?
-                frame.setTrim(frame.trimmed, frame.sourceSize.w, frame.sourceSize.h, source.w, source.y, source.w, source.h);
+                frames.push(this.buildFrame(i, json.frames[i]));
             }
-
-            frames.push(frame);
+        }
+        else
+        {
+            for (var key in json.frames)
+            {
+                frames.push(this.buildFrame(i, json.frames[key]));
+                i++;
+            }
         }
 
         return frames;
+
+    },
+
+    buildFrame: function (index, frame) {
+
+        var rect = frame.frame;
+
+        var output = new PhaserMicro.Frame(index, rect.x, rect.y, rect.w, rect.h, frame.filename);
+
+        if (frame.trimmed)
+        {
+            var source = frame.spriteSourceSize;
+            frame.setTrim(frame.sourceSize.w, frame.sourceSize.h, source.w, source.y, source.w, source.h);
+        }
+
+        return output;
 
     },
 
