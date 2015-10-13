@@ -19,7 +19,7 @@
 PhaserMicro.Frame = function (index, x, y, width, height, name) {
 
     /**
-    * @property {number} index - The index of this Frame within the FrameData set it is being added to.
+    * @property {number} index - The index of this Frame within the FrameData set it belongs to.
     */
     this.index = index;
 
@@ -94,9 +94,33 @@ PhaserMicro.Frame = function (index, x, y, width, height, name) {
     */
     this.spriteSourceSizeH = 0;
 
+    /**
+    * @property {object} _uvs - WebGL UV data.
+    * @default
+    */
+    this._uvs = { x0: 0, y0: 0, x1: 0, y1: 0, x2: 0, y2: 0, x3: 0, y3: 0 };
+
 };
 
 PhaserMicro.Frame.prototype = {
+
+    updateUVs: function (baseWidth, baseHeight) {
+
+        //  Swap for 'this.crop' once we add atlas support back in
+        
+        this._uvs.x0 = this.x / baseWidth;
+        this._uvs.y0 = this.y / baseHeight;
+
+        this._uvs.x1 = (this.x + this.width) / baseWidth;
+        this._uvs.y1 = this.y / baseHeight;
+
+        this._uvs.x2 = (this.x + this.width) / baseWidth;
+        this._uvs.y2 = (this.y + this.height) / baseHeight;
+
+        this._uvs.x3 = this.x / baseWidth;
+        this._uvs.y3 = (this.y + this.height) / baseHeight;
+
+    },
 
     /**
     * If the frame was trimmed when added to the Texture Atlas this records the trim and source data.

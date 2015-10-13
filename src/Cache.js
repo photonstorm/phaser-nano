@@ -24,7 +24,7 @@ PhaserMicro.Cache.prototype = {
         }
         else
         {
-            var frames = [ new PhaserMicro.Rectangle(0, 0, data.width, data.height) ];
+            var frames = [ new PhaserMicro.Frame(0, 0, 0, data.width, data.height) ];
         }
 
         this.addImageEntry(key, url, data, frames);
@@ -53,19 +53,10 @@ PhaserMicro.Cache.prototype = {
 
     },
 
-    addTextureAtlas: function (key, url, data, atlasData) {
+    addTextureAtlas: function (key, url, data, json) {
 
-        console.log(arguments);
-
-        var frames = this.buildAtlasData(atlasData);
-
-        this.addImageEntry(key, url, data, frames);
-
-    },
-
-    buildAtlasData: function (json) {
-
-        console.log(json);
+        // console.log(arguments);
+        // var frames = this.buildAtlasData(atlasData);
 
         if (!json['frames'])
         {
@@ -73,42 +64,26 @@ PhaserMicro.Cache.prototype = {
             return;
         }
 
-        var i = 0;
-        var frames = [];
+        var width = data.width;
+        var height = data.height;
+        var frameData = new PhaserMicro.FrameData(this.game);
 
         if (Array.isArray(json.frames))
         {
-            for (i = 0; i < json.frames.length; i++)
+            for (var i = 0; i < json.frames.length; i++)
             {
-                frames.push(this.buildFrame(i, json.frames[i]));
+                frameData.add(json.frames[i], width, height);
             }
         }
         else
         {
             for (var key in json.frames)
             {
-                frames.push(this.buildFrame(i, json.frames[key]));
-                i++;
+                frameData.add(json.frames[key], width, height);
             }
         }
 
-        return frames;
-
-    },
-
-    buildFrame: function (index, frame) {
-
-        var rect = frame.frame;
-
-        var output = new PhaserMicro.Frame(index, rect.x, rect.y, rect.w, rect.h, frame.filename);
-
-        if (frame.trimmed)
-        {
-            var source = frame.spriteSourceSize;
-            frame.setTrim(frame.sourceSize.w, frame.sourceSize.h, source.w, source.y, source.w, source.h);
-        }
-
-        return output;
+        this.addImageEntry(key, url, data, frameData);
 
     },
 

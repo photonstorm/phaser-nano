@@ -13,9 +13,9 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 
     this.blendMode = PhaserMicro.BLEND_NORMAL;
 
-    this._frame = -1;
+    // this._frame = -1;
 
-    this.frame = new PhaserMicro.Rectangle();
+    this.frame = new PhaserMicro.Frame();
 
     this.width = 0;
     this.height = 0;
@@ -30,6 +30,13 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 PhaserMicro.Texture.prototype = {
 
     setFrame: function (value) {
+
+        //  Why are they copied all the time?
+        //  I guess so a Texture could have a custom crop? But that doesn't make sense.
+        //  The crop value could be part of the Texture object, not the Frame.
+        //  Trim would be identical no matter which sprite used it.
+        //  Could we precalculate all the UV data too? Save doing the math every frame,
+        //  for every animation, for every sprite.
 
         var baseFrame = this.baseTexture.frameData[value];
 
