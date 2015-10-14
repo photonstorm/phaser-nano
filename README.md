@@ -11,6 +11,10 @@ Phaser Micro is a highly optimized and bare minimum version of its parent framew
 * Canvas Renderer
 * Asset Loader inc. parallel download streams
 * Asset Cache
+* Texture Atlas support (JSON Array and JSON Hash formats supported)
+* Texture Crop support
+* Texture Frame support
+* Global FrameData (Sprites share Frame references, cutting down massively on animation / atlas overhead)
 * Sprites with Position, Scale, Anchor, Rotation and Pivot
 * Sprite Sheet support (fixed frame)
 * Sprite Alpha
@@ -23,8 +27,6 @@ Phaser Micro is a highly optimized and bare minimum version of its parent framew
 
 ## TODO
 
-* Texture Atlas support (JSON only)
-* Texture crop support
 * Canvas Blend Modes
 * World object (a Layer?)
 * Layer (combo of a Group and a Sprite, a parent of children that lives on the display list)

@@ -23,8 +23,6 @@ PhaserMicro.Canvas.prototype = {
 
         this.smoothProperty = this.getSmoothingPrefix();
 
-        PhaserMicro.log('initCanvas');
-
     },
 
     render: function () {
@@ -114,8 +112,18 @@ PhaserMicro.Canvas.prototype = {
 
         this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserMicro.LINEAR || !this.game.pixelArt);
 
-        var dx = sprite.anchor.x * -texture.frame.width;
-        var dy = sprite.anchor.y * -texture.frame.height;
+        var dx, dy;
+
+        if (frame.trimmed)
+        {
+            dx = frame.trimX - sprite.anchor.x * texture.cropWidth;
+            dy = frame.trimY - sprite.anchor.y * texture.cropHeight;
+        }
+        else
+        {
+            dx = sprite.anchor.x * -frame.width;
+            dy = sprite.anchor.y * -frame.height;
+        }
 
         // var dx = (this.texture.trim) ? this.texture.trim.x - this.anchor.x * this.texture.trim.width : this.anchor.x * -this.texture.frame.width;
         // var dy = (this.texture.trim) ? this.texture.trim.y - this.anchor.y * this.texture.trim.height : this.anchor.y * -this.texture.frame.height;
