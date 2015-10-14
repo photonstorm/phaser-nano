@@ -47,7 +47,10 @@ PhaserMicro.FrameData.prototype = {
         this._indexes.push(this._frames[i]);
 
         //  String mapping
-        this._names[name] = this._frames[i];
+        if (name)
+        {
+            this._names[name] = this._frames[i];
+        }
 
         return newFrame;
 

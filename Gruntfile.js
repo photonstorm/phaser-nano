@@ -29,6 +29,9 @@ module.exports = function (grunt) {
                     'src/Sprite.js',
                     'src/Matrix.js',
                     'src/Geometry.js',
+                    'src/Group.js',
+                    'src/Frame.js',
+                    'src/FrameData.js',
                     'src/Outro.js'
                 ],
                 dest: 'dist/phaser-micro.js'
