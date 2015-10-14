@@ -4,7 +4,7 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Loader = function (game) {
+PhaserNano.Loader = function (game) {
 
     this.game = game;
     this.cache = game.cache;
@@ -23,7 +23,7 @@ PhaserMicro.Loader = function (game) {
 
 };
 
-PhaserMicro.Loader.prototype = {
+PhaserNano.Loader.prototype = {
 
     reset: function () {
 
@@ -166,7 +166,7 @@ PhaserMicro.Loader.prototype = {
 
                 if (file.error)
                 {
-                    PhaserMicro.log('File loading error' + file.key);
+                    PhaserNano.log('File loading error' + file.key);
                     // this.onFileError.dispatch(file.key, file);
                 }
 

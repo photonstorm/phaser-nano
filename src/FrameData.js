@@ -10,7 +10,7 @@
 * @class Phaser.FrameData
 * @constructor
 */
-PhaserMicro.FrameData = function () {
+PhaserNano.FrameData = function () {
 
     /**
     * @property {Array} _frames - Local array of Frame objects.
@@ -32,13 +32,13 @@ PhaserMicro.FrameData = function () {
 
 };
 
-PhaserMicro.FrameData.prototype = {
+PhaserNano.FrameData.prototype = {
 
     addFrame: function (x, y, width, height, name) {
 
         var i = this._frames.length;
 
-        var newFrame = new PhaserMicro.Frame(i, x, y, width, height, name);
+        var newFrame = new PhaserNano.Frame(i, x, y, width, height, name);
 
         //  The base Frame object
         this._frames.push(newFrame);

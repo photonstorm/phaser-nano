@@ -17,7 +17,7 @@ module.exports = function (grunt) {
 
         concat: {
 
-            micro: {
+            nano: {
                 src: [
                     'src/Intro.js',
                     'src/Game.js',
@@ -34,7 +34,7 @@ module.exports = function (grunt) {
                     'src/FrameData.js',
                     'src/Outro.js'
                 ],
-                dest: 'dist/phaser-micro.js'
+                dest: 'dist/phaser-nano.js'
             }
 
         },
@@ -43,10 +43,10 @@ module.exports = function (grunt) {
 
             micro: {
                 options: {
-                    banner: '/* Phaser-Micro v1.0.0 (C) Copyright 2015 Photon Storm Ltd. */\n'
+                    banner: '/* Phaser-Nano v1.0.0 (C) Copyright 2015 Photon Storm Ltd. */\n'
                 },
-                src: ['dist/phaser-micro.js'],
-                dest: 'dist/phaser-micro.min.js'
+                src: ['dist/phaser-nano.js'],
+                dest: 'dist/phaser-nano.min.js'
             }
 
         },
@@ -81,6 +81,6 @@ module.exports = function (grunt) {
 
     });
 
-    grunt.registerTask('default', ['clean', 'concat:micro', 'uglify:micro']);
+    grunt.registerTask('default', ['clean', 'concat:nano', 'uglify:nano']);
 
 };

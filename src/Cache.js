@@ -4,7 +4,7 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Cache = function (game) {
+PhaserNano.Cache = function (game) {
 
     this.game = game;
 
@@ -14,11 +14,11 @@ PhaserMicro.Cache = function (game) {
 
 };
 
-PhaserMicro.Cache.prototype = {
+PhaserNano.Cache.prototype = {
 
     addImage: function (key, url, img, frameWidth, frameHeight, frameMax, margin, spacing) {
 
-        var frameData = new PhaserMicro.FrameData();
+        var frameData = new PhaserNano.FrameData();
 
         if (frameWidth !== undefined)
         {
@@ -40,7 +40,7 @@ PhaserMicro.Cache.prototype = {
             key: key,
             url: url,
             data: img,
-            base: new PhaserMicro.BaseTexture(img, frames)
+            base: new PhaserNano.BaseTexture(img, frames)
         };
 
         if (this.game.pixelArt)
@@ -65,7 +65,7 @@ PhaserMicro.Cache.prototype = {
 
         var width = img.width;
         var height = img.height;
-        var frameData = new PhaserMicro.FrameData();
+        var frameData = new PhaserNano.FrameData();
 
         if (Array.isArray(json.frames))
         {

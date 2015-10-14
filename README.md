@@ -1,8 +1,8 @@
-# Phaser Micro
+# Phaser Nano
 
 Phaser is a fast, free and fun open source HTML5 game framework used by thousands of developers worldwide. It uses [Pixi.js](https://github.com/GoodBoyDigital/pixi.js/) for WebGL and Canvas rendering across desktop and mobile web browsers.
 
-Phaser Micro is a highly optimized and bare minimum version of its parent framework. Designed specifically for super low file size environments such as banner ads and interstitials, yet still extremely powerful and flexible. It retains the same approach towards ease-of-use that makes Phaser so popular.
+Phaser Nano is a highly optimized and bare minimum version of its parent framework. Designed specifically for super low file size environments such as banner ads and interstitials, yet still extremely powerful and flexible. It retains the same approach towards ease-of-use that makes Phaser so popular.
 
 ## Features
 
@@ -38,7 +38,6 @@ Phaser Micro is a highly optimized and bare minimum version of its parent framew
 * Game background color
 * Texture.fromCanvas (then can use it for basic Text support)
 * buildSheet ought to move to FrameData (or Loader?)
-* Probably rename from Phaser Micro to Phaser Nano
 
 ![div](http://www.phaser.io/images/github/div.png)
 

@@ -15,7 +15,7 @@
 * @param {number} width - The width of the Rectangle. Should always be either zero or a positive value.
 * @param {number} height - The height of the Rectangle. Should always be either zero or a positive value.
 */
-PhaserMicro.Rectangle = function (x, y, width, height) {
+PhaserNano.Rectangle = function (x, y, width, height) {
 
     x = x || 0;
     y = y || 0;
@@ -44,7 +44,7 @@ PhaserMicro.Rectangle = function (x, y, width, height) {
 
 };
 
-PhaserMicro.Rectangle.prototype = {
+PhaserNano.Rectangle.prototype = {
 
     copyFrom: function (src) {
 
@@ -57,13 +57,13 @@ PhaserMicro.Rectangle.prototype = {
 
     clone: function () {
 
-        return new PhaserMicro.Rectangle(this.x, this.y, this.width, this.height);
+        return new PhaserNano.Rectangle(this.x, this.y, this.width, this.height);
 
     }
 
 };
 
-PhaserMicro.Point = function (x, y) {
+PhaserNano.Point = function (x, y) {
 
     x = x || 0;
     y = y || 0;
@@ -80,7 +80,7 @@ PhaserMicro.Point = function (x, y) {
 
 };
 
-PhaserMicro.Point.prototype = {
+PhaserNano.Point.prototype = {
 
     /**
     * Sets the `x` and `y` values of this Point object to the given values.

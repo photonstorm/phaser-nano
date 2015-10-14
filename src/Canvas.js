@@ -1,4 +1,4 @@
-PhaserMicro.Canvas = function (game) {
+PhaserNano.Canvas = function (game) {
 
     this.game = game;
     this.canvas = game.canvas;
@@ -11,11 +11,11 @@ PhaserMicro.Canvas = function (game) {
 
     //  Temporary - will move to a World container
     this.worldAlpha = 1;
-    this.worldTransform = new PhaserMicro.Matrix();
+    this.worldTransform = new PhaserNano.Matrix();
 
 };
 
-PhaserMicro.Canvas.prototype = {
+PhaserNano.Canvas.prototype = {
 
     boot: function () {
 
@@ -75,7 +75,7 @@ PhaserMicro.Canvas.prototype = {
 
         var frame = texture.frame;
 
-        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserMicro.LINEAR || !this.game.pixelArt);
+        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserNano.LINEAR || !this.game.pixelArt);
 
         var dx = -texture.frame.width;
         var dy = -texture.frame.height;
@@ -110,7 +110,7 @@ PhaserMicro.Canvas.prototype = {
         var texture = sprite.texture;
         var frame = texture.frame;
 
-        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserMicro.LINEAR || !this.game.pixelArt);
+        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserNano.LINEAR || !this.game.pixelArt);
 
         var dx, dy;
 

@@ -4,7 +4,7 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Group = function (game) {
+PhaserNano.Group = function (game) {
 
     this.game = game;
 
@@ -12,7 +12,7 @@ PhaserMicro.Group = function (game) {
 
 };
 
-PhaserMicro.Group.prototype = {
+PhaserNano.Group.prototype = {
 
     add: function (child) {
 

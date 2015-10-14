@@ -1,17 +1,17 @@
 {
-  "name": "PhaserMicro",
+  "name": "PhaserNano",
   "version": "1.0.0",
   "release": "",
   "description": "",
   "author": "Richard Davey",
   "logo": "https://raw.github.com/photonstorm/phaser/master/phaser-logo-small.png",
   "homepage": "http://phaser.io",
-  "bugs": "https://github.com/photonstorm/phaser-micro/issues",
+  "bugs": "https://github.com/photonstorm/phaser-nano/issues",
   "license": "MIT",
   "licenseUrl": "http://www.opensource.org/licenses/mit-license.php",
   "repository": {
     "type": "git",
-    "url": "https://photonstorm@github.com/photonstorm/phaser-micro.git"
+    "url": "https://photonstorm@github.com/photonstorm/phaser-nano.git"
   },
   "scripts": {
     "test": "NODE_ENV=test grunt jshint"

@@ -4,25 +4,25 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-var PhaserMicro = PhaserMicro || {};
+var PhaserNano = PhaserNano || {};
 
-PhaserMicro.VERSION = '1.0.0';
+PhaserNano.VERSION = '1.0.0';
 
-PhaserMicro.BLEND_NORMAL = 0;
-PhaserMicro.BLEND_ADD = 1;
-PhaserMicro.BLEND_MULTIPLY = 2;
-PhaserMicro.BLEND_SCREEN = 3;
+PhaserNano.BLEND_NORMAL = 0;
+PhaserNano.BLEND_ADD = 1;
+PhaserNano.BLEND_MULTIPLY = 2;
+PhaserNano.BLEND_SCREEN = 3;
 
-PhaserMicro.LINEAR = 0;
-PhaserMicro.NEAREST = 1;
+PhaserNano.LINEAR = 0;
+PhaserNano.NEAREST = 1;
 
-PhaserMicro.TINT = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
+PhaserNano.TINT = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
 
-PhaserMicro.PI_2 = Math.PI * 2;
-PhaserMicro.RAD_TO_DEG = 180 / Math.PI;
-PhaserMicro.DEG_TO_RAD = Math.PI / 180;
+PhaserNano.PI_2 = Math.PI * 2;
+PhaserNano.RAD_TO_DEG = 180 / Math.PI;
+PhaserNano.DEG_TO_RAD = Math.PI / 180;
 
-PhaserMicro.Game = function (width, height, renderer, parent, state) {
+PhaserNano.Game = function (width, height, renderer, parent, state) {
 
     this.parent = parent || '';
     this.width = width || 800;
@@ -44,13 +44,13 @@ PhaserMicro.Game = function (width, height, renderer, parent, state) {
     //  Move to World?
     this.children = [];
     // this.worldAlpha = 1;
-    // this.worldTransform = new PhaserMicro.Matrix();
+    // this.worldTransform = new PhaserNano.Matrix();
 
     this.boot();
 
 };
 
-PhaserMicro.Game.prototype = {
+PhaserNano.Game.prototype = {
 
     boot: function () {
 
@@ -90,8 +90,8 @@ PhaserMicro.Game.prototype = {
 
         this.showHeader();
 
-        this.cache = new PhaserMicro.Cache(this);
-        this.load = new PhaserMicro.Loader(this);
+        this.cache = new PhaserNano.Cache(this);
+        this.load = new PhaserNano.Loader(this);
 
         //  Create the Canvas
 
@@ -100,8 +100,8 @@ PhaserMicro.Game.prototype = {
         this.canvas.height = this.height;
 
         //  TODO: WebGL / Canvas switch
-        // this.renderer = new PhaserMicro.Canvas(this);
-        this.renderer = new PhaserMicro.WebGL(this);
+        // this.renderer = new PhaserNano.Canvas(this);
+        this.renderer = new PhaserNano.WebGL(this);
         this.renderer.boot();
 
         this.addToDOM();
@@ -134,10 +134,10 @@ PhaserMicro.Game.prototype = {
             return;
         }
 
-        var v = PhaserMicro.VERSION;
+        var v = PhaserNano.VERSION;
 
         var args = [
-            '%c %c %c %c %c  PhaserMicro v' + v + ' - http://phaser.io  ',
+            '%c %c %c %c %c  Phaser Nano v' + v + ' - http://phaser.io/nano  ',
             'background: #ff0000',
             'background: #ffff00',
             'background: #00ff00',
@@ -215,7 +215,7 @@ PhaserMicro.Game.prototype = {
 
     addChild: function (x, y, key, frame) {
 
-        var sprite = new PhaserMicro.Sprite(this, x, y, key, frame);
+        var sprite = new PhaserNano.Sprite(this, x, y, key, frame);
 
         sprite.parent = this.renderer;
 

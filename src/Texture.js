@@ -5,13 +5,13 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Texture = function (baseTexture, frame) {
+PhaserNano.Texture = function (baseTexture, frame) {
 
     if (frame === undefined) { frame = 0; }
 
     this.baseTexture = baseTexture;
 
-    this.blendMode = PhaserMicro.BLEND_NORMAL;
+    this.blendMode = PhaserNano.BLEND_NORMAL;
 
     //  A Frame object that specifies the part of the BaseTexture that this Texture uses.
     //  Also holds Trim data.
@@ -33,7 +33,7 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 
 };
 
-PhaserMicro.Texture.prototype = {
+PhaserNano.Texture.prototype = {
 
     resetCrop: function () {
 
@@ -102,7 +102,7 @@ PhaserMicro.Texture.prototype = {
 
 };
 
-Object.defineProperties(PhaserMicro.Texture.prototype, {
+Object.defineProperties(PhaserNano.Texture.prototype, {
 
     'width': {
 
@@ -178,7 +178,7 @@ Object.defineProperties(PhaserMicro.Texture.prototype, {
 
 });
 
-PhaserMicro.BaseTexture = function (source, frameData) {
+PhaserNano.BaseTexture = function (source, frameData) {
 
     this.source = source;
 
@@ -187,7 +187,7 @@ PhaserMicro.BaseTexture = function (source, frameData) {
 
     this.frameData = frameData;
 
-    this.scaleMode = PhaserMicro.LINEAR;
+    this.scaleMode = PhaserNano.LINEAR;
     this.premultipliedAlpha = true;
 
     this._gl = [];
@@ -196,7 +196,7 @@ PhaserMicro.BaseTexture = function (source, frameData) {
 
 };
 
-PhaserMicro.BaseTexture.prototype = {
+PhaserNano.BaseTexture.prototype = {
 
     dirty: function () {
 

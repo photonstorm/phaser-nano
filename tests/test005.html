@@ -19,7 +19,7 @@
 
 <script type="text/javascript">
 
-    var game = new PhaserMicro.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update, render: render });
+    var game = new PhaserNano.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update, render: render });
 
     function preload () {
 
@@ -37,7 +37,7 @@
 
     function create() {
 
-        blitTexture = new PhaserMicro.Texture(game.cache.getTexture('ship1'));
+        blitTexture = new PhaserNano.Texture(game.cache.getTexture('ship1'));
 
         //  Want the ability to just render images directly without sprites
         game.addChild(0, 0, 'sky');

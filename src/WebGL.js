@@ -5,7 +5,7 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.WebGL = function (game) {
+PhaserNano.WebGL = function (game) {
 
     this.game = game;
     this.canvas = game.canvas;
@@ -27,7 +27,7 @@ PhaserMicro.WebGL = function (game) {
 
     //  Temporary - will move to a World container
     this.worldAlpha = 1;
-    this.worldTransform = new PhaserMicro.Matrix();
+    this.worldTransform = new PhaserNano.Matrix();
 
     this.contextLost = false;
 
@@ -41,7 +41,7 @@ PhaserMicro.WebGL = function (game) {
     this.vertices = new Float32Array(this.batchSize * 4 * this.vertSize);
     this.indices = new Uint16Array(this.batchSize * 6);
 
-    this._blitMatrix = new PhaserMicro.Matrix();
+    this._blitMatrix = new PhaserNano.Matrix();
 
     this._size = 0;
     this._batch = [];
@@ -51,7 +51,7 @@ PhaserMicro.WebGL = function (game) {
 
 };
 
-PhaserMicro.WebGL.prototype = {
+PhaserNano.WebGL.prototype = {
 
     boot: function () {
 
@@ -157,7 +157,7 @@ PhaserMicro.WebGL.prototype = {
 
         if (!gl.getProgramParameter(program, gl.LINK_STATUS))
         {
-            PhaserMicro.log("Could not initialise shaders");
+            PhaserNano.log("Could not initialise shaders");
             return false;
         }
         else
@@ -289,7 +289,7 @@ PhaserMicro.WebGL.prototype = {
 
         this._blitMatrix.set(1, 0, 0, 1, x, y);
 
-        this.addVerts(texture.uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserMicro.TINT);
+        this.addVerts(texture.uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserNano.TINT);
 
         this._batch[this._size++] = texture;
 
@@ -444,19 +444,19 @@ PhaserMicro.WebGL.prototype = {
             if (blend !== nextBlend)
             {
                 //  Unrolled for speed
-                if (nextBlend === PhaserMicro.BLEND_NORMAL)
+                if (nextBlend === PhaserNano.BLEND_NORMAL)
                 {
                     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlend === PhaserMicro.BLEND_ADD)
+                else if (nextBlend === PhaserNano.BLEND_ADD)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
                 }
-                else if (nextBlend === PhaserMicro.BLEND_MULTIPLY)
+                else if (nextBlend === PhaserNano.BLEND_MULTIPLY)
                 {
                     gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlend === PhaserMicro.BLEND_SCREEN)
+                else if (nextBlend === PhaserNano.BLEND_SCREEN)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
                 }

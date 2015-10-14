@@ -7,7 +7,7 @@
 /**
 * A Frame is a single frame of an animation and is part of a FrameData collection.
 *
-* @class PhaserMicro.Frame
+* @class PhaserNano.Frame
 * @constructor
 * @param {number} index - The index of this Frame within the FrameData set it is being added to.
 * @param {number} x - X position of the frame within the texture image.
@@ -16,7 +16,7 @@
 * @param {number} height - Height of the frame within the texture image.
 * @param {string} [name] - The name of the frame. In Texture Atlas data this is usually set to the filename.
 */
-PhaserMicro.Frame = function (index, x, y, width, height, name) {
+PhaserNano.Frame = function (index, x, y, width, height, name) {
 
     /**
     * @property {number} index - The index of this Frame within its FrameData set.
@@ -96,7 +96,7 @@ PhaserMicro.Frame = function (index, x, y, width, height, name) {
 
 };
 
-PhaserMicro.Frame.prototype = {
+PhaserNano.Frame.prototype = {
 
     /**
     * If the frame was trimmed when added to the Texture Atlas this records the trim and source data.
@@ -139,4 +139,4 @@ PhaserMicro.Frame.prototype = {
 
 };
 
-PhaserMicro.Frame.prototype.constructor = PhaserMicro.Frame;
+PhaserNano.Frame.prototype.constructor = PhaserNano.Frame;

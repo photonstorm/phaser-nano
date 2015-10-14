@@ -5,7 +5,7 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Matrix = function() {
+PhaserNano.Matrix = function() {
 
     this.a = 1;
     this.b = 0;
@@ -16,7 +16,7 @@ PhaserMicro.Matrix = function() {
 
 };
 
-PhaserMicro.Matrix.prototype = {
+PhaserNano.Matrix.prototype = {
 
     set: function (a, b, c, d, tx, ty) {
 
@@ -34,7 +34,7 @@ PhaserMicro.Matrix.prototype = {
 };
 
 /*
-PhaserMicro.Matrix.prototype = {
+PhaserNano.Matrix.prototype = {
 
     fromArray: function (array) {
 
@@ -182,7 +182,7 @@ PhaserMicro.Matrix.prototype = {
 
 };
 
-PhaserMicro.identityMatrix = new PhaserMicro.Matrix();
+PhaserNano.identityMatrix = new PhaserNano.Matrix();
 
 */
 

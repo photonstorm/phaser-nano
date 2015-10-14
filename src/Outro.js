@@ -1,13 +1,13 @@
     if (typeof exports !== 'undefined') {
         if (typeof module !== 'undefined' && module.exports) {
-            exports = module.exports = PhaserMicro;
+            exports = module.exports = PhaserNano;
         }
-        exports.PhaserMicro = PhaserMicro;
+        exports.PhaserNano = PhaserNano;
     } else if (typeof define !== 'undefined' && define.amd) {
-        define('PhaserMicro', (function() { return root.PhaserMicro = PhaserMicro; })() );
+        define('PhaserNano', (function() { return root.PhaserNano = PhaserNano; })() );
     } else {
-        root.PhaserMicro = PhaserMicro;
+        root.PhaserNano = PhaserNano;
     }
 
-    return PhaserMicro;
+    return PhaserNano;
 }).call(this);

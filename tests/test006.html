@@ -19,7 +19,7 @@
 
 <script type="text/javascript">
 
-    var game = new PhaserMicro.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update, render: render });
+    var game = new PhaserNano.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update, render: render });
 
     function preload () {
 
@@ -35,7 +35,7 @@
 
     function create() {
 
-        blitTexture = new PhaserMicro.Texture(game.cache.getTexture('ship'));
+        blitTexture = new PhaserNano.Texture(game.cache.getTexture('ship'));
 
         console.log(blitTexture);
 

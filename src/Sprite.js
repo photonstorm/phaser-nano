@@ -5,17 +5,17 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Sprite = function (game, x, y, key, frame) {
+PhaserNano.Sprite = function (game, x, y, key, frame) {
 
     this.game = game;
 
-    this.position = new PhaserMicro.Point(x, y);
+    this.position = new PhaserNano.Point(x, y);
 
-    this.scale = new PhaserMicro.Point(1, 1);
+    this.scale = new PhaserNano.Point(1, 1);
 
-    this.anchor = new PhaserMicro.Point();
+    this.anchor = new PhaserNano.Point();
 
-    this.pivot = new PhaserMicro.Point();
+    this.pivot = new PhaserNano.Point();
 
     this.rotation = 0;
 
@@ -32,11 +32,11 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
     this.worldAlpha = 1;
     this.alpha = 1;
 
-    this.worldTransform = new PhaserMicro.Matrix();
+    this.worldTransform = new PhaserNano.Matrix();
 
     this.tint = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
 
-    this.texture = new PhaserMicro.Texture(game.cache.getTexture(key), frame);
+    this.texture = new PhaserNano.Texture(game.cache.getTexture(key), frame);
 
     this._width = this.texture.width;
     this._height = this.texture.height;
@@ -46,7 +46,7 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
 };
 
-PhaserMicro.Sprite.prototype = {
+PhaserNano.Sprite.prototype = {
 
     updateFast: function () {
 
@@ -108,7 +108,7 @@ PhaserMicro.Sprite.prototype = {
 
     updateTransform: function () {
 
-        if (this.rotation % PhaserMicro.PI_2)
+        if (this.rotation % PhaserNano.PI_2)
         {
             this.updateRotation();
         }
@@ -123,9 +123,9 @@ PhaserMicro.Sprite.prototype = {
 
 };
 
-PhaserMicro.Sprite.prototype.constructor = PhaserMicro.Sprite;
+PhaserNano.Sprite.prototype.constructor = PhaserNano.Sprite;
 
-Object.defineProperties(PhaserMicro.Sprite.prototype, {
+Object.defineProperties(PhaserNano.Sprite.prototype, {
 
     'width': {
 
