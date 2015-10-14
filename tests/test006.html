@@ -12,6 +12,8 @@
     <script src="../src/Sprite.js"></script>
     <script src="../src/Matrix.js"></script>
     <script src="../src/Geometry.js"></script>
+    <script src="../src/Frame.js"></script>
+    <script src="../src/FrameData.js"></script>
 </head>
 <body>
 
@@ -35,11 +37,19 @@
 
         blitTexture = new PhaserMicro.Texture(game.cache.getTexture('ship'));
 
+        console.log(blitTexture);
+
         //  Want the ability to just render images directly without sprites
         game.addChild(0, 0, 'sky');
 
+        var test = game.addChild(300, 100, 'ship');
+        var test2 = game.addChild(320, 200, 'ship');
+
+        console.log(test.texture);
+
         //  Our Blit pool
-        for (var i = 0; i < 10000; i++)
+        // for (var i = 0; i < 10000; i++)
+        for (var i = 0; i < 1; i++)
         {
             var x = Math.random() * game.width;
             var y = Math.random() * game.height;

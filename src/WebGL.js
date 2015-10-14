@@ -233,8 +233,6 @@ PhaserMicro.WebGL.prototype = {
         this._size = 0;
         this._batch = [];
 
-        // PhaserMicro.log('renderWebGL start', '#ff0000');
-
         this.dirty = true;
 
         var sprite;
@@ -256,8 +254,6 @@ PhaserMicro.WebGL.prototype = {
         {
             this.game.state.render.call(this.game.state, this);
         }
-
-        // PhaserMicro.log('renderWebGL end', '#ff0000');
 
         this.flush();
 
