@@ -48,9 +48,8 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
 PhaserMicro.Sprite.prototype = {
 
-    updateTransform: function() {
+    updateFast: function () {
 
-        //  Create matrix refs for easy access
         var pt = this.parent.worldTransform;
         var wt = this.worldTransform;
 
@@ -60,52 +59,62 @@ PhaserMicro.Sprite.prototype = {
         var tx = this.position.x - this.pivot.x * a;
         var ty = this.position.y - this.pivot.y * d;
 
-        //  If rotation !== 0
+        wt.a  = a  * pt.a;
+        wt.b  = a  * pt.b;
+        wt.c  = d  * pt.c;
+        wt.d  = d  * pt.d;
+        wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+        wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+
+    },
+
+    updateRotation: function () {
+
+        var pt = this.parent.worldTransform;
+        var wt = this.worldTransform;
+
+        //  Check to see if the rotation is the same as the previous render.
+        //  This means we only need to use sin and cos when rotation actually changes
+        if (this.rotation !== this._rot)
+        {
+            this._rot = this.rotation;
+            this._sr = Math.sin(this.rotation);
+            this._cr = Math.cos(this.rotation);
+        }
+
+        var a  =  this._cr * this.scale.x;
+        var b  =  this._sr * this.scale.x;
+        var c  = -this._sr * this.scale.y;
+        var d  =  this._cr * this.scale.y;
+        var tx =  this.position.x;
+        var ty =  this.position.y;
+        
+        //  Check for pivot.. not often used so geared towards that fact!
+        if (this.pivot.x || this.pivot.y)
+        {
+            tx -= this.pivot.x * a + this.pivot.y * c;
+            ty -= this.pivot.x * b + this.pivot.y * d;
+        }
+
+        //  Concat the parent matrix with the objects transform
+        wt.a  = a  * pt.a + b  * pt.c;
+        wt.b  = a  * pt.b + b  * pt.d;
+        wt.c  = c  * pt.a + d  * pt.c;
+        wt.d  = c  * pt.b + d  * pt.d;
+        wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+        wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+
+    },
+
+    updateTransform: function () {
+
         if (this.rotation % PhaserMicro.PI_2)
         {
-            //  Check to see if the rotation is the same as the previous render.
-            //  This means we only need to use sin and cos when rotation actually changes
-            if (this.rotation !== this._rot)
-            {
-                this._rot = this.rotation;
-                this._sr = Math.sin(this.rotation);
-                this._cr = Math.cos(this.rotation);
-            }
-
-            //  Get the matrix values of the sprite based on its transform properties
-
-            // a  =  this._cr * this.scale.x;
-            a *=  this._cr;
-            var b  =  this._sr * this.scale.x;
-            var c  = -this._sr * this.scale.y;
-            // d  =  this._cr * this.scale.y;
-            d  *=  this._cr;
-            tx =  this.position.x;
-            ty =  this.position.y;
-            
-            //  Check for pivot.. not often used so geared towards that fact!
-            if (this.pivot.x || this.pivot.y)
-            {
-                tx -= this.pivot.x * a + this.pivot.y * c;
-                ty -= this.pivot.x * b + this.pivot.y * d;
-            }
-
-            //  Concat the parent matrix with the objects transform
-            wt.a  = a  * pt.a + b  * pt.c;
-            wt.b  = a  * pt.b + b  * pt.d;
-            wt.c  = c  * pt.a + d  * pt.c;
-            wt.d  = c  * pt.b + d  * pt.d;
-            wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-            wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+            this.updateRotation();
         }
         else
         {
-            wt.a  = a  * pt.a;
-            wt.b  = a  * pt.b;
-            wt.c  = d  * pt.c;
-            wt.d  = d  * pt.d;
-            wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-            wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+            this.updateFast();
         }
 
         this.worldAlpha = this.alpha * this.parent.worldAlpha;

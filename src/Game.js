@@ -156,7 +156,13 @@ PhaserMicro.Game.prototype = {
             this.state.create.call(this.state, this);
         }
 
-        window.requestAnimationFrame(this.update.bind(this));
+        var _this = this;
+
+        this._onLoop = function (time) {
+            return _this.update(time);
+        };
+
+        window.requestAnimationFrame(this._onLoop);
 
     },
 
@@ -175,7 +181,7 @@ PhaserMicro.Game.prototype = {
         //     this.frameCount++;
         // }
 
-        window.requestAnimationFrame(this.update.bind(this));
+        window.requestAnimationFrame(this._onLoop);
 
     },
 
