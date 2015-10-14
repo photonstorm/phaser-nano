@@ -30,6 +30,8 @@ PhaserNano.FrameData = function () {
     */
     this._names = {};
 
+    this.total = 0;
+
 };
 
 PhaserNano.FrameData.prototype = {
@@ -51,6 +53,8 @@ PhaserNano.FrameData.prototype = {
         {
             this._names[name] = this._frames[i];
         }
+
+        this.total++;
 
         return newFrame;
 
@@ -99,6 +103,8 @@ PhaserNano.FrameData.prototype = {
 
         return this._names[value];
 
-    }
+    },
+
+
 
 };

@@ -270,24 +270,35 @@ PhaserNano.WebGL.prototype = {
         //  Allow as argument (along with scale and rotation?)
         var alpha = 1;
 
-        /*
+        
         //  Not needed unless we allow them to set the anchor
         var aX = 0;
         var aY = 0;
 
-        var w0 = (texture.frame.width) * (1 - aX);
-        var w1 = (texture.frame.width) * -aX;
+        // var w0 = (texture.frame.width) * (1 - aX);
+        // var w1 = (texture.frame.width) * -aX;
 
-        var h0 = texture.frame.height * (1 - aY);
-        var h1 = texture.frame.height * -aY;
-        */
+        // var h0 = texture.frame.height * (1 - aY);
+        // var h1 = texture.frame.height * -aY;
+        
+        var w0, w1, h0, h1;
 
-        var w0 = texture.frame.width;
-        var w1 = texture.frame.width;
-        var h0 = texture.frame.height;
-        var h1 = texture.frame.height;
+        w0 = texture.cropWidth * (1 - aX);
+        w1 = texture.cropWidth * -aX;
+
+        h0 = texture.cropHeight * (1 - aY);
+        h1 = texture.cropHeight * -aY;
+
+
+        // var w0 = texture.frame.width;
+        // var w1 = texture.frame.width;
+        // var h0 = texture.frame.height;
+        // var h1 = texture.frame.height;
 
         this._blitMatrix.set(1, 0, 0, 1, x, y);
+
+        // this.addVerts(texture.uvs, sprite.worldTransform, w0, h0, w1, h1, sprite.worldAlpha, sprite.tint);
+        // this._batch[this._size++] = texture;
 
         this.addVerts(texture.uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserNano.TINT);
 
