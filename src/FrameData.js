@@ -34,25 +34,11 @@ PhaserMicro.FrameData = function () {
 
 PhaserMicro.FrameData.prototype = {
 
-    /**
-    * Adds a new Frame to this FrameData collection.
-    *
-    * @method Phaser.FrameData#addFrame
-    * @param {object} json - The json frame data.
-    */
-    add: function (json, width, height, name) {
+    addFrame: function (x, y, width, height, name) {
 
         var i = this._frames.length;
 
-        var rect = json.frame;
-
-        var newFrame = new PhaserMicro.Frame(i, rect.x, rect.y, rect.w, rect.h, name);
-
-        if (json.trimmed)
-        {
-            var source = json.spriteSourceSize;
-            newFrame.setTrim(json.sourceSize.w, json.sourceSize.h, source.x, source.y, source.w, source.h);
-        }
+        var newFrame = new PhaserMicro.Frame(i, x, y, width, height, name);
 
         //  The base Frame object
         this._frames.push(newFrame);
@@ -62,6 +48,28 @@ PhaserMicro.FrameData.prototype = {
 
         //  String mapping
         this._names[name] = this._frames[i];
+
+        return newFrame;
+
+    },
+
+    /**
+    * Adds a new Frame to this FrameData collection.
+    *
+    * @method Phaser.FrameData#addFrame
+    * @param {object} json - The json frame data.
+    */
+    add: function (json, width, height, name) {
+
+        var rect = json.frame;
+
+        var newFrame = this.addFrame(rect.x, rect.y, rect.w, rect.h, name);
+
+        if (json.trimmed)
+        {
+            var source = json.spriteSourceSize;
+            newFrame.setTrim(json.sourceSize.w, json.sourceSize.h, source.x, source.y, source.w, source.h);
+        }
 
     },
 

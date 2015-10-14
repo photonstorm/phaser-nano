@@ -16,29 +16,31 @@ PhaserMicro.Cache = function (game) {
 
 PhaserMicro.Cache.prototype = {
 
-    addImage: function (key, url, data, frameWidth, frameHeight, frameMax, margin, spacing) {
+    addImage: function (key, url, img, frameWidth, frameHeight, frameMax, margin, spacing) {
+
+        var frameData = new PhaserMicro.FrameData();
 
         if (frameWidth !== undefined)
         {
-            var frames = this.buildSheet(data, frameWidth, frameHeight, frameMax, margin, spacing);
+            this.buildSheet(frameData, img, frameWidth, frameHeight, frameMax, margin, spacing);
         }
         else
         {
-            var frames = [ new PhaserMicro.Frame(0, 0, 0, data.width, data.height) ];
+            frameData.addFrame(0, 0, img.width, img.height, key);
         }
 
-        this.addImageEntry(key, url, data, frames);
+        this.addImageEntry(key, url, img, frameData);
 
     },
 
     //  Private
-    addImageEntry: function (key, url, data, frames) {
+    addImageEntry: function (key, url, img, frames) {
 
         var obj = {
             key: key,
             url: url,
-            data: data,
-            base: new PhaserMicro.BaseTexture(data, frames)
+            data: img,
+            base: new PhaserMicro.BaseTexture(img, frames)
         };
 
         if (this.game.pixelArt)
@@ -53,7 +55,7 @@ PhaserMicro.Cache.prototype = {
 
     },
 
-    addTextureAtlas: function (key, url, data, json) {
+    addTextureAtlas: function (key, url, img, json) {
 
         if (!json['frames'])
         {
@@ -61,8 +63,8 @@ PhaserMicro.Cache.prototype = {
             return;
         }
 
-        var width = data.width;
-        var height = data.height;
+        var width = img.width;
+        var height = img.height;
         var frameData = new PhaserMicro.FrameData();
 
         if (Array.isArray(json.frames))
@@ -80,15 +82,14 @@ PhaserMicro.Cache.prototype = {
             }
         }
 
-        this.addImageEntry(key, url, data, frameData);
+        this.addImageEntry(key, url, img, frameData);
 
     },
 
-    buildSheet: function (img, frameWidth, frameHeight, frameMax, margin, spacing) {
+    buildSheet: function (frameData, img, frameWidth, frameHeight, frameMax, margin, spacing) {
 
         var width = img.width;
         var height = img.height;
-        var frames = [];
 
         if (frameWidth <= 0)
         {
@@ -112,7 +113,7 @@ PhaserMicro.Cache.prototype = {
         //  Zero or smaller than frame sizes?
         if (width === 0 || height === 0 || width < frameWidth || height < frameHeight || total === 0)
         {
-            return frames;
+            return;
         }
 
         var x = margin;
@@ -120,7 +121,7 @@ PhaserMicro.Cache.prototype = {
 
         for (var i = 0; i < total; i++)
         {
-            frames.push(new PhaserMicro.Frame(i, x, y, frameWidth, frameHeight));
+            frameData.addFrame(x, y, frameWidth, frameHeight);
 
             x += frameWidth + spacing;
 
@@ -130,8 +131,6 @@ PhaserMicro.Cache.prototype = {
                 y += frameHeight + spacing;
             }
         }
-
-        return frames;
 
     },
 
