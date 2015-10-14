@@ -134,7 +134,7 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
     'height': {
 
         get: function() {
-            return  this.scale.y * this.texture.frame.height;
+            return this.scale.y * this.texture.frame.height;
         },
 
         set: function(value) {
@@ -224,7 +224,6 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
             this.texture.blendMode = value;
         }
 
-    },
-
+    }
 
 });

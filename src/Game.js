@@ -22,26 +22,6 @@ PhaserMicro.PI_2 = Math.PI * 2;
 PhaserMicro.RAD_TO_DEG = 180 / Math.PI;
 PhaserMicro.DEG_TO_RAD = Math.PI / 180;
 
-PhaserMicro.showLog = true;
-
-PhaserMicro.log = function (text, color, bg) {
-
-    if (!PhaserMicro.showLog)
-    {
-        return;
-    }
-
-    if (color === undefined) { color: '#000000'; }
-    if (bg === undefined) { bg: '#ffffff'; }
-
-    text = '%c' + text;
-
-    var style = 'color: ' + color + '; background: ' + bg;
-
-    console.log.apply(console, [text, style]);
-
-};
-
 PhaserMicro.Game = function (width, height, renderer, parent, state) {
 
     this.parent = parent || '';

@@ -25,7 +25,7 @@ PhaserMicro.FrameData = function () {
     this._indexes = [];
 
     /**
-    * @property {Object} _names - Local array of frame names to Frame objects.
+    * @property {Object} _names - Local maping object of frame names to Frame objects.
     * @private
     */
     this._names = {};
@@ -42,8 +42,6 @@ PhaserMicro.FrameData.prototype = {
     */
     add: function (json, width, height, name) {
 
-        // console.log('FrameData.add', name, json);
-
         var i = this._frames.length;
 
         var rect = json.frame;
@@ -53,10 +51,8 @@ PhaserMicro.FrameData.prototype = {
         if (json.trimmed)
         {
             var source = json.spriteSourceSize;
-            newFrame.setTrim(json.sourceSize.w, json.sourceSize.h, source.w, source.y, source.w, source.h);
+            newFrame.setTrim(json.sourceSize.w, json.sourceSize.h, source.x, source.y, source.w, source.h);
         }
-
-        newFrame.updateUVs(width, height);
 
         //  The base Frame object
         this._frames.push(newFrame);

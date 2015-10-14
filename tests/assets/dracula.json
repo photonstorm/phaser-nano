@@ -1,0 +1,44 @@
+{"frames": [
+
+{
+	"filename": "background",
+	"frame": {"x":2,"y":2,"w":1024,"h":896},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1024,"h":896},
+	"sourceSize": {"w":1024,"h":896}
+},
+{
+	"filename": "copy",
+	"frame": {"x":1028,"y":396,"w":596,"h":80},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":400,"y":780,"w":596,"h":80},
+	"sourceSize": {"w":1024,"h":896}
+},
+{
+	"filename": "hills",
+	"frame": {"x":2,"y":900,"w":1024,"h":820},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":76,"w":1024,"h":820},
+	"sourceSize": {"w":1024,"h":896}
+},
+{
+	"filename": "logo",
+	"frame": {"x":1028,"y":2,"w":912,"h":392},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":28,"y":52,"w":912,"h":392},
+	"sourceSize": {"w":1024,"h":896}
+}],
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "dracula.png",
+	"format": "RGBA8888",
+	"size": {"w":1942,"h":1722},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:8f87674edc52bebab33d0d2c1de41176:d75416c4acfeea124596fdad8a9c56fc:ef160f9d0188357a51d565a10859564e$"
+}
+}

@@ -19,32 +19,32 @@
 PhaserMicro.Frame = function (index, x, y, width, height, name) {
 
     /**
-    * @property {number} index - The index of this Frame within the FrameData set it belongs to.
+    * @property {number} index - The index of this Frame within its FrameData set.
     */
     this.index = index;
 
     /**
-    * @property {number} x - X position within the image to cut from.
+    * @property {number} x - X position within the image to cut from (in atlas json: frame.x)
     */
     this.x = x;
 
     /**
-    * @property {number} y - Y position within the image to cut from.
+    * @property {number} y - Y position within the image to cut from (in atlas json: frame.y)
     */
     this.y = y;
 
     /**
-    * @property {number} width - Width of the frame.
+    * @property {number} width - Width of the frame to cut from the image (in atlas json: frame.w)
     */
     this.width = width;
 
     /**
-    * @property {number} height - Height of the frame.
+    * @property {number} height - Height of the frame to cut from the image (in atlas json: frame.h)
     */
     this.height = height;
 
     /**
-    * @property {string} name - Useful for Texture Atlas files (is set to the filename value).
+    * @property {string} name - If the Frame is part of a Texture Atlas this is the 'filename' or key value.
     */
     this.name = name || '';
 
@@ -55,94 +55,72 @@ PhaserMicro.Frame = function (index, x, y, width, height, name) {
     this.rotation = 0;
 
     /**
+    * @property {number} sourceWidth - Width of the original sprite before it was trimmed (sourceSize.w)
+    */
+    this.sourceWidth = width;
+
+    /**
+    * @property {number} sourceHeight - Height of the original sprite before it was trimmed (sourceSize.h)
+    */
+    this.sourceHeight = height;
+
+    /**
     * @property {boolean} trimmed - Was it trimmed when packed?
     * @default
     */
     this.trimmed = false;
 
     /**
-    * @property {number} sourceSizeW - Width of the original sprite before it was trimmed.
-    */
-    this.sourceSizeW = width;
-
-    /**
-    * @property {number} sourceSizeH - Height of the original sprite before it was trimmed.
-    */
-    this.sourceSizeH = height;
-
-    /**
-    * @property {number} spriteSourceSizeX - X position of the trimmed sprite inside original sprite.
+    * @property {number} trimX - X position of the trimmed sprite inside original sprite (spriteSourceSize.x)
     * @default
     */
-    this.spriteSourceSizeX = 0;
+    this.trimX = 0;
 
     /**
-    * @property {number} spriteSourceSizeY - Y position of the trimmed sprite inside original sprite.
+    * @property {number} trimY - Y position of the trimmed sprite inside original sprite (spriteSourceSize.y)
     * @default
     */
-    this.spriteSourceSizeY = 0;
+    this.trimY = 0;
 
     /**
-    * @property {number} spriteSourceSizeW - Width of the trimmed sprite.
+    * @property {number} trimWidth - Width of the trimmed sprite (spriteSourceSize.w)
     * @default
     */
-    this.spriteSourceSizeW = 0;
+    this.trimWidth = 0;
 
     /**
-    * @property {number} spriteSourceSizeH - Height of the trimmed sprite.
+    * @property {number} trimHeight - Height of the trimmed sprite (spriteSourceSize.h)
     * @default
     */
-    this.spriteSourceSizeH = 0;
-
-    /**
-    * @property {object} uvs - WebGL UV data.
-    * @default
-    */
-    this.uvs = { x0: 0, y0: 0, x1: 0, y1: 0, x2: 0, y2: 0, x3: 0, y3: 0 };
+    this.trimHeight = 0;
 
 };
 
 PhaserMicro.Frame.prototype = {
 
-    updateUVs: function (baseWidth, baseHeight) {
-
-        //  Swap for 'this.crop' once we add atlas support back in
-        
-        this.uvs.x0 = this.x / baseWidth;
-        this.uvs.y0 = this.y / baseHeight;
-
-        this.uvs.x1 = (this.x + this.width) / baseWidth;
-        this.uvs.y1 = this.y / baseHeight;
-
-        this.uvs.x2 = (this.x + this.width) / baseWidth;
-        this.uvs.y2 = (this.y + this.height) / baseHeight;
-
-        this.uvs.x3 = this.x / baseWidth;
-        this.uvs.y3 = (this.y + this.height) / baseHeight;
-
-    },
-
     /**
     * If the frame was trimmed when added to the Texture Atlas this records the trim and source data.
     *
     * @method Phaser.Frame#setTrim
-    * @param {number} width - The actual width of the frame before being trimmed.
-    * @param {number} height - The actual height of the frame before being trimmed.
-    * @param {number} destX - The destination X position of the trimmed frame for display.
-    * @param {number} destY - The destination Y position of the trimmed frame for display.
-    * @param {number} destWidth - The destination width of the trimmed frame for display.
-    * @param {number} destHeight - The destination height of the trimmed frame for display.
+    * @param {number} width - The actual width of the frame before being trimmed (sourceSize.w)
+    * @param {number} height - The actual height of the frame before being trimmed (sourceSize.h)
+    * @param {number} x - The x offset of the trimmed sprite from its x origin (spriteSourceSize.x)
+    * @param {number} y - The y offset of the trimmed sprite from its y origin (spriteSourceSize.y)
+    * @param {number} trimWidth - The width of the trimmed frame (spriteSourceSize.w)
+    * @param {number} trimHeight - The height of the trimmed frame (spriteSourceSize.h)
     */
-    setTrim: function (width, height, destX, destY, destWidth, destHeight) {
+    setTrim: function (width, height, x, y, trimWidth, trimHeight) {
 
         this.trimmed = true;
 
-        this.sourceSizeW = width;
-        this.sourceSizeH = height;
-        this.spriteSourceSizeX = destX;
-        this.spriteSourceSizeY = destY;
-        this.spriteSourceSizeW = destWidth;
-        this.spriteSourceSizeH = destHeight;
+        this.sourceWidth = width;
+        this.sourceHeight = height;
+
+        this.trimX = x;
+        this.trimY = y;
+
+        this.trimWidth = trimWidth;
+        this.trimHeight = trimHeight;
 
     },
 

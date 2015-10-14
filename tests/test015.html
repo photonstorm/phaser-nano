@@ -19,42 +19,37 @@
 
 <script type="text/javascript">
 
-    var game = new PhaserMicro.Game(800, 600, 'canvas', '', { preload: preload, create: create, update: update });
+    var game = new PhaserMicro.Game(1024, 896, 'canvas', '', { preload: preload, create: create, update: update });
 
     function preload () {
 
-        game.pixelArt = true;
-
         game.load.path = 'assets/';
-        // game.load.atlas('atlas_array_no_trim');
-        game.load.atlas('atlas_array_no_trim');
+        game.load.atlas('dracula');
 
     }
 
+    var cy = 0;
+    var logo;
+
     function create() {
 
-        var sprite;
+        game.addChild(0, 0, 'dracula', 'background');
+        game.addChild(0, 0, 'dracula', 'hills');
 
-        //  Lots of sprites using the same shared texture data
-        //  with their own scales
+        logo = game.addChild(0, 0, 'dracula', 'logo');
 
-        for (var i = 0; i < 30; i++)
-        {
-            var x = Math.random() * game.width;
-            var y = Math.random() * game.height;
+        game.addChild(0, 0, 'dracula', 'copy');
 
-            sprite = game.addChild(x, y, 'atlas_array_no_trim', Math.round(Math.random() * 12));
-
-            sprite.anchor.x = 0.5;
-            sprite.anchor.y = 0.5;
-            var scale = 0.5 + Math.random();
-            sprite.scale.x = scale;
-            sprite.scale.y = scale;
-        }
+        logo.texture.cropHeight = 0;
 
     }
 
     function update() {
+
+        if (logo.texture.cropHeight < logo.texture.frame.height)
+        {
+            logo.texture.cropHeight++;
+        }
 
     }
 

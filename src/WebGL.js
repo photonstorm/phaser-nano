@@ -312,36 +312,30 @@ PhaserMicro.WebGL.prototype = {
         var aX = sprite.anchor.x;
         var aY = sprite.anchor.y;
 
-        var w0 = (texture.frame.width) * (1 - aX);
-        var w1 = (texture.frame.width) * -aX;
+        var w0, w1, h0, h1;
 
-        var h0 = texture.frame.height * (1 - aY);
-        var h1 = texture.frame.height * -aY;
-
-        /*
-        if (texture.trim)
+        if (texture.frame.trimmed)
         {
-            // if the sprite is trimmed then we need to add the extra space before transforming the sprite coords..
-            var trim = texture.trim;
+            var frame = texture.frame;
 
-            w1 = trim.x - aX * trim.width;
-            w0 = w1 + texture.crop.width;
+            // If the sprite is trimmed then we need to add
+            // the extra space before transforming the sprite coords
+            w1 = frame.trimX - aX * frame.trimWidth;
+            w0 = w1 + texture._crop.width;
 
-            h1 = trim.y - aY * trim.height;
-            h0 = h1 + texture.crop.height;
-
+            h1 = frame.trimY - aY * frame.trimHeight;
+            h0 = h1 + texture._crop.height;
         }
         else
         {
-            w0 = (texture.frame.width ) * (1-aX);
-            w1 = (texture.frame.width ) * -aX;
+            w0 = (texture.width) * (1 - aX);
+            w1 = (texture.width) * -aX;
 
-            h0 = texture.frame.height * (1-aY);
-            h1 = texture.frame.height * -aY;
+            h0 = texture.height * (1 - aY);
+            h1 = texture.height * -aY;
         }
-        */
 
-        this.addVerts(texture.frame.uvs, sprite.worldTransform, w0, h0, w1, h1, sprite.worldAlpha, sprite.tint);
+        this.addVerts(texture.uvs, sprite.worldTransform, w0, h0, w1, h1, sprite.worldAlpha, sprite.tint);
 
         this._batch[this._size++] = texture;
 

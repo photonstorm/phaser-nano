@@ -13,20 +13,55 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 
     this.blendMode = PhaserMicro.BLEND_NORMAL;
 
+    //  A Frame object that specifies the part of the BaseTexture that this Texture uses.
+    //  Also holds Trim data.
     this.frame = this.baseTexture.frameData.getFrame(frame);
 
-    this.width = 0;
-    this.height = 0;
+    //  A per Texture setting that the user can modify without
+    //  messing with any other Sprite using the same Texture Frame
+    this._crop = { x: this.frame.x, y: this.frame.y, width: this.frame.width, height: this.frame.height };
+
+    this._isCropped = false;
+
+    /**
+    * @property {object} uvs - WebGL UV data.
+    * @default
+    */
+    this.uvs = { x0: 0, y0: 0, x1: 0, y1: 0, x2: 0, y2: 0, x3: 0, y3: 0 };
+
+    this.updateUVs();
 
 };
 
 PhaserMicro.Texture.prototype = {
 
+    resetCrop: function () {
+
+        this._isCropped = false;
+
+        this.updateFrame();
+
+    },
+
+    updateFrame: function () {
+
+        if (!this._isCropped)
+        {
+            this._crop.x = this.frame.x;
+            this._crop.y = this.frame.y;
+            this._crop.width = this.frame.width;
+            this._crop.height = this.frame.height;
+        }
+
+        this.updateUVs();
+
+    },
+
     setFrame: function (value) {
 
         this.frame = this.baseTexture.frameData.getFrame(value);
 
-        this.uvs = this.frame.uvs;
+        this.updateFrame();
 
     },
 
@@ -34,7 +69,7 @@ PhaserMicro.Texture.prototype = {
 
         this.frame = this.baseTexture.frameData.getFrameIndex(value);
 
-        this.uvs = this.frame.uvs;
+        this.updateFrame();
 
     },
 
@@ -42,35 +77,106 @@ PhaserMicro.Texture.prototype = {
 
         this.frame = this.baseTexture.frameData.getFrameName(value);
 
-        this.uvs = this.frame.uvs;
+        this.updateFrame();
 
     },
 
-
-    /*
     updateUVs: function () {
 
-        //  Swap for 'this.crop' once we add atlas support back in
-        var frame = this.frame;
-        var tw = this.baseTexture.width;
-        var th = this.baseTexture.height;
+        var bw = this.baseTexture.width;
+        var bh = this.baseTexture.height;
         
-        this._uvs.x0 = frame.x / tw;
-        this._uvs.y0 = frame.y / th;
+        this.uvs.x0 = this.cropX / bw;
+        this.uvs.y0 = this.cropY / bh;
 
-        this._uvs.x1 = (frame.x + frame.width) / tw;
-        this._uvs.y1 = frame.y / th;
+        this.uvs.x1 = (this.cropX + this.cropWidth) / bw;
+        this.uvs.y1 = this.cropY / bh;
 
-        this._uvs.x2 = (frame.x + frame.width) / tw;
-        this._uvs.y2 = (frame.y + frame.height) / th;
+        this.uvs.x2 = (this.cropX + this.cropWidth) / bw;
+        this.uvs.y2 = (this.cropY + this.cropHeight) / bh;
 
-        this._uvs.x3 = frame.x / tw;
-        this._uvs.y3 = (frame.y + frame.height) / th;
+        this.uvs.x3 = this.cropX / bw;
+        this.uvs.y3 = (this.cropY + this.cropHeight) / bh;
 
     }
-    */
 
 };
+
+Object.defineProperties(PhaserMicro.Texture.prototype, {
+
+    'width': {
+
+        get: function() {
+            return this.frame.sourceWidth;
+        }
+
+    },
+
+    'height': {
+
+        get: function() {
+            return this.frame.sourceHeight;
+        }
+
+    },
+
+    'cropX': {
+
+        get: function() {
+            return this._crop.x;
+        },
+
+        set: function(value) {
+            this._crop.x = value;
+            this._isCropped = true;
+            this.updateUVs();
+        }
+
+    },
+
+    'cropY': {
+
+        get: function() {
+            return this._crop.y;
+        },
+
+        set: function(value) {
+            this._crop.y = value;
+            this._isCropped = true;
+            this.updateUVs();
+        }
+
+    },
+
+    'cropWidth': {
+
+        get: function() {
+            return this._crop.width;
+        },
+
+        set: function(value) {
+            this._crop.width = value;
+            this._isCropped = true;
+            this.updateUVs();
+        }
+
+    },
+
+    'cropHeight': {
+
+        get: function() {
+            return this._crop.height;
+        },
+
+        set: function(value) {
+            this._crop.height = value;
+            this._isCropped = true;
+            this.updateUVs();
+        }
+
+    }
+
+});
 
 PhaserMicro.BaseTexture = function (source, frameData) {
 
