@@ -125,10 +125,16 @@ PhaserMicro.Canvas.prototype = {
             dy = sprite.anchor.y * -frame.height;
         }
 
-        // var dx = (this.texture.trim) ? this.texture.trim.x - this.anchor.x * this.texture.trim.width : this.anchor.x * -this.texture.frame.width;
-        // var dy = (this.texture.trim) ? this.texture.trim.y - this.anchor.y * this.texture.trim.height : this.anchor.y * -this.texture.frame.height;
-
-        this.context.drawImage(texture.baseTexture.source, frame.x, frame.y, frame.width, frame.height, dx, dy, frame.width, frame.height);
+        this.context.drawImage(
+            texture.baseTexture.source,
+            texture.cropX,
+            texture.cropY,
+            texture.cropWidth,
+            texture.cropHeight,
+            dx,
+            dy,
+            texture.cropWidth,
+            texture.cropHeight);
 
         // for (var i = 0; i < sprite.children.length; i++)
         // {
