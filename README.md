@@ -6,7 +6,7 @@ Phaser Nano is a highly optimized and bare minimum version of its parent framewo
 
 ## Features
 
-* Currently only 7.8KB (min/gz) / 25KB (min)
+* Only 7.8KB (min/gz) / 25KB (min)
 * WebGL Renderer with Sprite Batch support
 * Canvas Renderer
 * Asset Loader inc. parallel download streams
@@ -28,6 +28,9 @@ Phaser Nano is a highly optimized and bare minimum version of its parent framewo
 ## TODO
 
 * Canvas Blend Modes
+* Bitmap Text support with texture in atlas
+* Multi-atlas support
+* Rotated atlas frame support
 * World object (a Layer?)
 * Layer (combo of a Group and a Sprite, a parent of children that lives on the display list)
 * Tweens (bare minimum build)

@@ -46,6 +46,9 @@ PhaserNano.Game = function (width, height, renderer, parent, state) {
     // this.worldAlpha = 1;
     // this.worldTransform = new PhaserNano.Matrix();
 
+    this.frameCount = 0;
+    this.frameMax = 1;
+
     this.boot();
 
 };
@@ -173,11 +176,21 @@ PhaserNano.Game.prototype = {
             this.state.update.call(this.state, this);
         }
 
+        for (var i = 0; i < this.children.length; i++)
+        {
+            sprite = this.children[i];
+
+            if (sprite.alive)
+            {
+                sprite.updateTransform();
+            }
+        }
+
         this.renderer.render();
 
-        // if (this.frameCount < 1)
+        // if (this.frameCount < this.frameMax)
         // {
-        //     window.requestAnimationFrame(this.update.bind(this));
+        //     window.requestAnimationFrame(this._onLoop);
         //     this.frameCount++;
         // }
 
@@ -217,6 +230,7 @@ PhaserNano.Game.prototype = {
 
         var sprite = new PhaserNano.Sprite(this, x, y, key, frame);
 
+        //   We shouldn't do this unless we really need to (saves on transform updates)
         sprite.parent = this.renderer;
 
         this.children.push(sprite);

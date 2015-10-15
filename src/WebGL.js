@@ -46,6 +46,9 @@ PhaserNano.WebGL = function (game) {
     this._size = 0;
     this._batch = [];
     this._base = null;
+    this._aVertexPosition = 0;
+    this._aTextureCoord = 0;
+    this._colorAttribute = 0;
 
     this.dirty = true;
 
@@ -166,9 +169,9 @@ PhaserNano.WebGL.prototype = {
             gl.useProgram(program);
 
             //  Get and store the attributes
-            this.aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
-            this.aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
-            this.colorAttribute = gl.getAttribLocation(program, 'aColor');
+            this._aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+            this._aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+            this._colorAttribute = gl.getAttribLocation(program, 'aColor');
 
             //  vertex position
             gl.enableVertexAttribArray(0);
@@ -231,21 +234,24 @@ PhaserNano.WebGL.prototype = {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         this._size = 0;
-        this._batch = [];
+        this._batch.length = 0;
 
         this.dirty = true;
 
-        var sprite;
+        var obj;
 
         for (var i = 0; i < this.game.children.length; i++)
         {
-            sprite = this.game.children[i];
+            obj = this.game.children[i];
 
-            sprite.updateTransform();
-
-            if (sprite.visible && sprite.worldAlpha > 0)
+            if (obj.renderable && obj.alive && obj.visible && obj.worldAlpha > 0)
             {
-                this.renderSprite(sprite);
+                this.renderSprite(obj);
+            }
+
+            if (obj.container && obj.children.length > 0)
+            {
+                this.renderLayer(obj);
             }
         }
 
@@ -256,6 +262,27 @@ PhaserNano.WebGL.prototype = {
         }
 
         this.flush();
+
+    },
+
+    renderLayer: function (layer) {
+
+        var obj;
+
+        for (var i = 0; i < layer.children.length; i++)
+        {
+            obj = layer.children[i];
+
+            if (obj.renderable && obj.alive && obj.visible && obj.worldAlpha > 0)
+            {
+                this.renderSprite(obj);
+            }
+
+            if (obj.container && obj.children.length > 0)
+            {
+                this.renderLayer(obj);
+            }
+        }
 
     },
 
@@ -417,13 +444,13 @@ PhaserNano.WebGL.prototype = {
             gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
 
             //  vertex position
-            gl.vertexAttribPointer(this.aVertexPosition, 2, gl.FLOAT, false, this.stride, 0);
+            gl.vertexAttribPointer(this._aVertexPosition, 2, gl.FLOAT, false, this.stride, 0);
 
             //  texture coordinate
-            gl.vertexAttribPointer(this.aTextureCoord, 2, gl.FLOAT, false, this.stride, 2 * 4);
+            gl.vertexAttribPointer(this._aTextureCoord, 2, gl.FLOAT, false, this.stride, 2 * 4);
 
             //  color attribute
-            gl.vertexAttribPointer(this.colorAttribute, 2, gl.FLOAT, false, this.stride, 4 * 4);
+            gl.vertexAttribPointer(this._colorAttribute, 2, gl.FLOAT, false, this.stride, 4 * 4);
         }
 
         //  Upload the verts to the buffer

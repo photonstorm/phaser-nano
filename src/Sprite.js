@@ -23,8 +23,9 @@ PhaserNano.Sprite = function (game, x, y, key, frame) {
 
     this.visible = true;
 
-    //  Needed?
     this.renderable = true;
+
+    this.container = false;
 
     //  The parent display object (Layer, other Sprite, World)
     this.parent = null;
@@ -49,6 +50,13 @@ PhaserNano.Sprite = function (game, x, y, key, frame) {
 PhaserNano.Sprite.prototype = {
 
     updateFast: function () {
+
+        if (!this.parent)
+        {
+            //  No parent? Then we can optimize to this ...
+            this.worldTransform.set(this.scale.x, 0, 0, this.scale.y, this.position.x - this.pivot.x * this.scale.x, this.position.y - this.pivot.y * this.scale.y);
+            return;
+        }
 
         var pt = this.parent.worldTransform;
         var wt = this.worldTransform;
@@ -118,6 +126,8 @@ PhaserNano.Sprite.prototype = {
         }
 
         this.worldAlpha = this.alpha * this.parent.worldAlpha;
+
+        // console.log('sprite updateTransform', this.worldTransform);
 
     }
 
