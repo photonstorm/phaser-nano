@@ -43,7 +43,7 @@ module.exports = function (grunt) {
 
         uglify: {
 
-            micro: {
+            nano: {
                 options: {
                     banner: '/* Phaser-Nano v1.0.0 (C) Copyright 2015 Photon Storm Ltd. */\n'
                 },

@@ -15,25 +15,25 @@
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-var PhaserMicro = PhaserMicro || {};
+var PhaserNano = PhaserNano || {};
 
-PhaserMicro.VERSION = '1.0.0';
+PhaserNano.VERSION = '1.0.0';
 
-PhaserMicro.BLEND_NORMAL = 0;
-PhaserMicro.BLEND_ADD = 1;
-PhaserMicro.BLEND_MULTIPLY = 2;
-PhaserMicro.BLEND_SCREEN = 3;
+PhaserNano.BLEND_NORMAL = 0;
+PhaserNano.BLEND_ADD = 1;
+PhaserNano.BLEND_MULTIPLY = 2;
+PhaserNano.BLEND_SCREEN = 3;
 
-PhaserMicro.LINEAR = 0;
-PhaserMicro.NEAREST = 1;
+PhaserNano.LINEAR = 0;
+PhaserNano.NEAREST = 1;
 
-PhaserMicro.TINT = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
+PhaserNano.TINT = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
 
-PhaserMicro.PI_2 = Math.PI * 2;
-PhaserMicro.RAD_TO_DEG = 180 / Math.PI;
-PhaserMicro.DEG_TO_RAD = Math.PI / 180;
+PhaserNano.PI_2 = Math.PI * 2;
+PhaserNano.RAD_TO_DEG = 180 / Math.PI;
+PhaserNano.DEG_TO_RAD = Math.PI / 180;
 
-PhaserMicro.Game = function (width, height, renderer, parent, state) {
+PhaserNano.Game = function (width, height, renderer, parent, state) {
 
     this.parent = parent || '';
     this.width = width || 800;
@@ -50,18 +50,21 @@ PhaserMicro.Game = function (width, height, renderer, parent, state) {
 
     this.cache = null;
     this.load = null;
+    this.add = null;
+
     this.renderer = null;
 
-    //  Move to World?
-    this.children = [];
-    // this.worldAlpha = 1;
-    // this.worldTransform = new PhaserMicro.Matrix();
+    this.world = null;
+
+    //  For frame debugging
+    this.frameCount = 0;
+    this.frameMax = 1;
 
     this.boot();
 
 };
 
-PhaserMicro.Game.prototype = {
+PhaserNano.Game.prototype = {
 
     boot: function () {
 
@@ -101,8 +104,10 @@ PhaserMicro.Game.prototype = {
 
         this.showHeader();
 
-        this.cache = new PhaserMicro.Cache(this);
-        this.load = new PhaserMicro.Loader(this);
+        this.cache = new PhaserNano.Cache(this);
+        this.load = new PhaserNano.Loader(this);
+        this.world = new PhaserNano.Layer(this, 0, 0);
+        this.add = new PhaserNano.Factory(this, this.world);
 
         //  Create the Canvas
 
@@ -111,8 +116,8 @@ PhaserMicro.Game.prototype = {
         this.canvas.height = this.height;
 
         //  TODO: WebGL / Canvas switch
-        // this.renderer = new PhaserMicro.Canvas(this);
-        this.renderer = new PhaserMicro.WebGL(this);
+        // this.renderer = new PhaserNano.Canvas(this);
+        this.renderer = new PhaserNano.WebGL(this);
         this.renderer.boot();
 
         this.addToDOM();
@@ -145,10 +150,10 @@ PhaserMicro.Game.prototype = {
             return;
         }
 
-        var v = PhaserMicro.VERSION;
+        var v = PhaserNano.VERSION;
 
         var args = [
-            '%c %c %c %c %c  PhaserMicro v' + v + ' - http://phaser.io  ',
+            '%c %c %c %c %c  Phaser Nano v' + v + ' - http://phaser.io/nano  ',
             'background: #ff0000',
             'background: #ffff00',
             'background: #00ff00',
@@ -167,7 +172,13 @@ PhaserMicro.Game.prototype = {
             this.state.create.call(this.state, this);
         }
 
-        window.requestAnimationFrame(this.update.bind(this));
+        var _this = this;
+
+        this._onLoop = function (time) {
+            return _this.update(time);
+        };
+
+        window.requestAnimationFrame(this._onLoop);
 
     },
 
@@ -178,15 +189,27 @@ PhaserMicro.Game.prototype = {
             this.state.update.call(this.state, this);
         }
 
+        this.world.updateTransform();
+
+        // for (var i = 0; i < this.children.length; i++)
+        // {
+        //     sprite = this.children[i];
+
+        //     if (sprite.alive)
+        //     {
+        //         sprite.updateTransform();
+        //     }
+        // }
+
         this.renderer.render();
 
-        // if (this.frameCount < 1)
+        // if (this.frameCount < this.frameMax)
         // {
-        //     window.requestAnimationFrame(this.update.bind(this));
+        //     window.requestAnimationFrame(this._onLoop);
         //     this.frameCount++;
         // }
 
-        window.requestAnimationFrame(this.update.bind(this));
+        window.requestAnimationFrame(this._onLoop);
 
     },
 
@@ -216,18 +239,6 @@ PhaserMicro.Game.prototype = {
 
         target.appendChild(this.canvas);
 
-    },
-
-    addChild: function (x, y, key, frame) {
-
-        var sprite = new PhaserMicro.Sprite(this, x, y, key, frame);
-
-        sprite.parent = this.renderer;
-
-        this.children.push(sprite);
-
-        return sprite;
-
     }
 
 };
@@ -239,7 +250,7 @@ PhaserMicro.Game.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.WebGL = function (game) {
+PhaserNano.WebGL = function (game) {
 
     this.game = game;
     this.canvas = game.canvas;
@@ -261,7 +272,7 @@ PhaserMicro.WebGL = function (game) {
 
     //  Temporary - will move to a World container
     this.worldAlpha = 1;
-    this.worldTransform = new PhaserMicro.Matrix();
+    this.worldTransform = new PhaserNano.Matrix();
 
     this.contextLost = false;
 
@@ -275,17 +286,20 @@ PhaserMicro.WebGL = function (game) {
     this.vertices = new Float32Array(this.batchSize * 4 * this.vertSize);
     this.indices = new Uint16Array(this.batchSize * 6);
 
-    this._blitMatrix = new PhaserMicro.Matrix();
+    this._blitMatrix = new PhaserNano.Matrix();
 
     this._size = 0;
     this._batch = [];
     this._base = null;
+    this._aVertexPosition = 0;
+    this._aTextureCoord = 0;
+    this._colorAttribute = 0;
 
     this.dirty = true;
 
 };
 
-PhaserMicro.WebGL.prototype = {
+PhaserNano.WebGL.prototype = {
 
     boot: function () {
 
@@ -391,7 +405,7 @@ PhaserMicro.WebGL.prototype = {
 
         if (!gl.getProgramParameter(program, gl.LINK_STATUS))
         {
-            PhaserMicro.log("Could not initialise shaders");
+            PhaserNano.log("Could not initialise shaders");
             return false;
         }
         else
@@ -400,9 +414,9 @@ PhaserMicro.WebGL.prototype = {
             gl.useProgram(program);
 
             //  Get and store the attributes
-            this.aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
-            this.aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
-            this.colorAttribute = gl.getAttribLocation(program, 'aColor');
+            this._aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+            this._aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+            this._colorAttribute = gl.getAttribLocation(program, 'aColor');
 
             //  vertex position
             gl.enableVertexAttribArray(0);
@@ -465,23 +479,24 @@ PhaserMicro.WebGL.prototype = {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         this._size = 0;
-        this._batch = [];
-
-        // PhaserMicro.log('renderWebGL start', '#ff0000');
+        this._batch.length = 0;
 
         this.dirty = true;
 
-        var sprite;
+        var obj;
 
-        for (var i = 0; i < this.game.children.length; i++)
+        for (var i = 0; i < this.game.world.children.length; i++)
         {
-            sprite = this.game.children[i];
+            obj = this.game.world.children[i];
 
-            sprite.updateTransform();
-
-            if (sprite.visible && sprite.worldAlpha > 0)
+            if (obj.renderable && obj.alive && obj.visible && obj.worldAlpha > 0)
             {
-                this.renderSprite(sprite);
+                this.renderSprite(obj);
+            }
+
+            if (obj.container && obj.children.length > 0)
+            {
+                this.renderLayer(obj);
             }
         }
 
@@ -491,9 +506,28 @@ PhaserMicro.WebGL.prototype = {
             this.game.state.render.call(this.game.state, this);
         }
 
-        // PhaserMicro.log('renderWebGL end', '#ff0000');
-
         this.flush();
+
+    },
+
+    renderLayer: function (layer) {
+
+        var obj;
+
+        for (var i = 0; i < layer.children.length; i++)
+        {
+            obj = layer.children[i];
+
+            if (obj.renderable && obj.alive && obj.visible && obj.worldAlpha > 0)
+            {
+                this.renderSprite(obj);
+            }
+
+            if (obj.container && obj.children.length > 0)
+            {
+                this.renderLayer(obj);
+            }
+        }
 
     },
 
@@ -508,26 +542,37 @@ PhaserMicro.WebGL.prototype = {
         //  Allow as argument (along with scale and rotation?)
         var alpha = 1;
 
-        /*
+        
         //  Not needed unless we allow them to set the anchor
         var aX = 0;
         var aY = 0;
 
-        var w0 = (texture.frame.width) * (1 - aX);
-        var w1 = (texture.frame.width) * -aX;
+        // var w0 = (texture.frame.width) * (1 - aX);
+        // var w1 = (texture.frame.width) * -aX;
 
-        var h0 = texture.frame.height * (1 - aY);
-        var h1 = texture.frame.height * -aY;
-        */
+        // var h0 = texture.frame.height * (1 - aY);
+        // var h1 = texture.frame.height * -aY;
+        
+        var w0, w1, h0, h1;
 
-        var w0 = texture.frame.width;
-        var w1 = texture.frame.width;
-        var h0 = texture.frame.height;
-        var h1 = texture.frame.height;
+        w0 = texture.cropWidth * (1 - aX);
+        w1 = texture.cropWidth * -aX;
+
+        h0 = texture.cropHeight * (1 - aY);
+        h1 = texture.cropHeight * -aY;
+
+
+        // var w0 = texture.frame.width;
+        // var w1 = texture.frame.width;
+        // var h0 = texture.frame.height;
+        // var h1 = texture.frame.height;
 
         this._blitMatrix.set(1, 0, 0, 1, x, y);
 
-        this.addVerts(texture.uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserMicro.TINT);
+        // this.addVerts(texture.uvs, sprite.worldTransform, w0, h0, w1, h1, sprite.worldAlpha, sprite.tint);
+        // this._batch[this._size++] = texture;
+
+        this.addVerts(texture.uvs, this._blitMatrix, w0, h0, w1, h1, alpha, PhaserNano.TINT);
 
         this._batch[this._size++] = texture;
 
@@ -644,13 +689,13 @@ PhaserMicro.WebGL.prototype = {
             gl.uniform2f(this.projectionVector, this.projection.x, this.projection.y);
 
             //  vertex position
-            gl.vertexAttribPointer(this.aVertexPosition, 2, gl.FLOAT, false, this.stride, 0);
+            gl.vertexAttribPointer(this._aVertexPosition, 2, gl.FLOAT, false, this.stride, 0);
 
             //  texture coordinate
-            gl.vertexAttribPointer(this.aTextureCoord, 2, gl.FLOAT, false, this.stride, 2 * 4);
+            gl.vertexAttribPointer(this._aTextureCoord, 2, gl.FLOAT, false, this.stride, 2 * 4);
 
             //  color attribute
-            gl.vertexAttribPointer(this.colorAttribute, 2, gl.FLOAT, false, this.stride, 4 * 4);
+            gl.vertexAttribPointer(this._colorAttribute, 2, gl.FLOAT, false, this.stride, 4 * 4);
         }
 
         //  Upload the verts to the buffer
@@ -682,19 +727,19 @@ PhaserMicro.WebGL.prototype = {
             if (blend !== nextBlend)
             {
                 //  Unrolled for speed
-                if (nextBlend === PhaserMicro.BLEND_NORMAL)
+                if (nextBlend === PhaserNano.BLEND_NORMAL)
                 {
                     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlend === PhaserMicro.BLEND_ADD)
+                else if (nextBlend === PhaserNano.BLEND_ADD)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
                 }
-                else if (nextBlend === PhaserMicro.BLEND_MULTIPLY)
+                else if (nextBlend === PhaserNano.BLEND_MULTIPLY)
                 {
                     gl.blendFunc(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
                 }
-                else if (nextBlend === PhaserMicro.BLEND_SCREEN)
+                else if (nextBlend === PhaserNano.BLEND_SCREEN)
                 {
                     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
                 }
@@ -809,7 +854,7 @@ PhaserMicro.WebGL.prototype = {
     },
 
 };
-PhaserMicro.Canvas = function (game) {
+PhaserNano.Canvas = function (game) {
 
     this.game = game;
     this.canvas = game.canvas;
@@ -822,11 +867,11 @@ PhaserMicro.Canvas = function (game) {
 
     //  Temporary - will move to a World container
     this.worldAlpha = 1;
-    this.worldTransform = new PhaserMicro.Matrix();
+    this.worldTransform = new PhaserNano.Matrix();
 
 };
 
-PhaserMicro.Canvas.prototype = {
+PhaserNano.Canvas.prototype = {
 
     boot: function () {
 
@@ -886,7 +931,7 @@ PhaserMicro.Canvas.prototype = {
 
         var frame = texture.frame;
 
-        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserMicro.LINEAR || !this.game.pixelArt);
+        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserNano.LINEAR || !this.game.pixelArt);
 
         var dx = -texture.frame.width;
         var dy = -texture.frame.height;
@@ -921,7 +966,7 @@ PhaserMicro.Canvas.prototype = {
         var texture = sprite.texture;
         var frame = texture.frame;
 
-        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserMicro.LINEAR || !this.game.pixelArt);
+        this.context[this.smoothProperty] = (texture.baseTexture.scaleMode === PhaserNano.LINEAR || !this.game.pixelArt);
 
         var dx, dy;
 
@@ -985,7 +1030,7 @@ PhaserMicro.Canvas.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Loader = function (game) {
+PhaserNano.Loader = function (game) {
 
     this.game = game;
     this.cache = game.cache;
@@ -1004,7 +1049,7 @@ PhaserMicro.Loader = function (game) {
 
 };
 
-PhaserMicro.Loader.prototype = {
+PhaserNano.Loader.prototype = {
 
     reset: function () {
 
@@ -1147,7 +1192,7 @@ PhaserMicro.Loader.prototype = {
 
                 if (file.error)
                 {
-                    PhaserMicro.log('File loading error' + file.key);
+                    PhaserNano.log('File loading error' + file.key);
                     // this.onFileError.dispatch(file.key, file);
                 }
 
@@ -1476,7 +1521,7 @@ PhaserMicro.Loader.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Cache = function (game) {
+PhaserNano.Cache = function (game) {
 
     this.game = game;
 
@@ -1486,11 +1531,11 @@ PhaserMicro.Cache = function (game) {
 
 };
 
-PhaserMicro.Cache.prototype = {
+PhaserNano.Cache.prototype = {
 
     addImage: function (key, url, img, frameWidth, frameHeight, frameMax, margin, spacing) {
 
-        var frameData = new PhaserMicro.FrameData();
+        var frameData = new PhaserNano.FrameData();
 
         if (frameWidth !== undefined)
         {
@@ -1512,7 +1557,7 @@ PhaserMicro.Cache.prototype = {
             key: key,
             url: url,
             data: img,
-            base: new PhaserMicro.BaseTexture(img, frames)
+            base: new PhaserNano.BaseTexture(img, frames)
         };
 
         if (this.game.pixelArt)
@@ -1537,7 +1582,7 @@ PhaserMicro.Cache.prototype = {
 
         var width = img.width;
         var height = img.height;
-        var frameData = new PhaserMicro.FrameData();
+        var frameData = new PhaserNano.FrameData();
 
         if (Array.isArray(json.frames))
         {
@@ -1643,13 +1688,13 @@ PhaserMicro.Cache.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Texture = function (baseTexture, frame) {
+PhaserNano.Texture = function (baseTexture, frame) {
 
     if (frame === undefined) { frame = 0; }
 
     this.baseTexture = baseTexture;
 
-    this.blendMode = PhaserMicro.BLEND_NORMAL;
+    this.blendMode = PhaserNano.BLEND_NORMAL;
 
     //  A Frame object that specifies the part of the BaseTexture that this Texture uses.
     //  Also holds Trim data.
@@ -1671,7 +1716,7 @@ PhaserMicro.Texture = function (baseTexture, frame) {
 
 };
 
-PhaserMicro.Texture.prototype = {
+PhaserNano.Texture.prototype = {
 
     resetCrop: function () {
 
@@ -1740,7 +1785,7 @@ PhaserMicro.Texture.prototype = {
 
 };
 
-Object.defineProperties(PhaserMicro.Texture.prototype, {
+Object.defineProperties(PhaserNano.Texture.prototype, {
 
     'width': {
 
@@ -1816,7 +1861,7 @@ Object.defineProperties(PhaserMicro.Texture.prototype, {
 
 });
 
-PhaserMicro.BaseTexture = function (source, frameData) {
+PhaserNano.BaseTexture = function (source, frameData) {
 
     this.source = source;
 
@@ -1825,7 +1870,7 @@ PhaserMicro.BaseTexture = function (source, frameData) {
 
     this.frameData = frameData;
 
-    this.scaleMode = PhaserMicro.LINEAR;
+    this.scaleMode = PhaserNano.LINEAR;
     this.premultipliedAlpha = true;
 
     this._gl = [];
@@ -1834,7 +1879,7 @@ PhaserMicro.BaseTexture = function (source, frameData) {
 
 };
 
-PhaserMicro.BaseTexture.prototype = {
+PhaserNano.BaseTexture.prototype = {
 
     dirty: function () {
 
@@ -1854,17 +1899,17 @@ PhaserMicro.BaseTexture.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Sprite = function (game, x, y, key, frame) {
+PhaserNano.Sprite = function (game, x, y, key, frame) {
 
     this.game = game;
 
-    this.position = new PhaserMicro.Point(x, y);
+    this.position = new PhaserNano.Point(x, y);
 
-    this.scale = new PhaserMicro.Point(1, 1);
+    this.scale = new PhaserNano.Point(1, 1);
 
-    this.anchor = new PhaserMicro.Point();
+    this.anchor = new PhaserNano.Point();
 
-    this.pivot = new PhaserMicro.Point();
+    this.pivot = new PhaserNano.Point();
 
     this.rotation = 0;
 
@@ -1872,8 +1917,9 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
     this.visible = true;
 
-    //  Needed?
     this.renderable = true;
+
+    this.container = false;
 
     //  The parent display object (Layer, other Sprite, World)
     this.parent = null;
@@ -1881,11 +1927,11 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
     this.worldAlpha = 1;
     this.alpha = 1;
 
-    this.worldTransform = new PhaserMicro.Matrix();
+    this.worldTransform = new PhaserNano.Matrix();
 
     this.tint = [0xffffff, 0xffffff, 0xffffff, 0xffffff];
 
-    this.texture = new PhaserMicro.Texture(game.cache.getTexture(key), frame);
+    this.texture = new PhaserNano.Texture(game.cache.getTexture(key), frame);
 
     this._width = this.texture.width;
     this._height = this.texture.height;
@@ -1895,11 +1941,10 @@ PhaserMicro.Sprite = function (game, x, y, key, frame) {
 
 };
 
-PhaserMicro.Sprite.prototype = {
+PhaserNano.Sprite.prototype = {
 
-    updateTransform: function() {
+    updateFast: function () {
 
-        //  Create matrix refs for easy access
         var pt = this.parent.worldTransform;
         var wt = this.worldTransform;
 
@@ -1909,63 +1954,75 @@ PhaserMicro.Sprite.prototype = {
         var tx = this.position.x - this.pivot.x * a;
         var ty = this.position.y - this.pivot.y * d;
 
-        //  If rotation !== 0
-        if (this.rotation % PhaserMicro.PI_2)
+        wt.a  = a  * pt.a;
+        wt.b  = a  * pt.b;
+        wt.c  = d  * pt.c;
+        wt.d  = d  * pt.d;
+        wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+        wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+
+    },
+
+    updateRotation: function () {
+
+        var pt = this.parent.worldTransform;
+        var wt = this.worldTransform;
+
+        //  Check to see if the rotation is the same as the previous render.
+        //  This means we only need to use sin and cos when rotation actually changes
+        if (this.rotation !== this._rot)
         {
-            //  Check to see if the rotation is the same as the previous render.
-            //  This means we only need to use sin and cos when rotation actually changes
-            if (this.rotation !== this._rot)
-            {
-                this._rot = this.rotation;
-                this._sr = Math.sin(this.rotation);
-                this._cr = Math.cos(this.rotation);
-            }
+            this._rot = this.rotation;
+            this._sr = Math.sin(this.rotation);
+            this._cr = Math.cos(this.rotation);
+        }
 
-            //  Get the matrix values of the sprite based on its transform properties
+        var a  =  this._cr * this.scale.x;
+        var b  =  this._sr * this.scale.x;
+        var c  = -this._sr * this.scale.y;
+        var d  =  this._cr * this.scale.y;
+        var tx =  this.position.x;
+        var ty =  this.position.y;
+        
+        //  Check for pivot.. not often used so geared towards that fact!
+        if (this.pivot.x || this.pivot.y)
+        {
+            tx -= this.pivot.x * a + this.pivot.y * c;
+            ty -= this.pivot.x * b + this.pivot.y * d;
+        }
 
-            // a  =  this._cr * this.scale.x;
-            a *=  this._cr;
-            var b  =  this._sr * this.scale.x;
-            var c  = -this._sr * this.scale.y;
-            // d  =  this._cr * this.scale.y;
-            d  *=  this._cr;
-            tx =  this.position.x;
-            ty =  this.position.y;
-            
-            //  Check for pivot.. not often used so geared towards that fact!
-            if (this.pivot.x || this.pivot.y)
-            {
-                tx -= this.pivot.x * a + this.pivot.y * c;
-                ty -= this.pivot.x * b + this.pivot.y * d;
-            }
+        //  Concat the parent matrix with the objects transform
+        wt.a  = a  * pt.a + b  * pt.c;
+        wt.b  = a  * pt.b + b  * pt.d;
+        wt.c  = c  * pt.a + d  * pt.c;
+        wt.d  = c  * pt.b + d  * pt.d;
+        wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+        wt.ty = tx * pt.b + ty * pt.d + pt.ty;
 
-            //  Concat the parent matrix with the objects transform
-            wt.a  = a  * pt.a + b  * pt.c;
-            wt.b  = a  * pt.b + b  * pt.d;
-            wt.c  = c  * pt.a + d  * pt.c;
-            wt.d  = c  * pt.b + d  * pt.d;
-            wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-            wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+    },
+
+    updateTransform: function () {
+
+        if (this.rotation % PhaserNano.PI_2)
+        {
+            this.updateRotation();
         }
         else
         {
-            wt.a  = a  * pt.a;
-            wt.b  = a  * pt.b;
-            wt.c  = d  * pt.c;
-            wt.d  = d  * pt.d;
-            wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-            wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+            this.updateFast();
         }
 
         this.worldAlpha = this.alpha * this.parent.worldAlpha;
+
+        // console.log('sprite updateTransform', this.worldTransform);
 
     }
 
 };
 
-PhaserMicro.Sprite.prototype.constructor = PhaserMicro.Sprite;
+PhaserNano.Sprite.prototype.constructor = PhaserNano.Sprite;
 
-Object.defineProperties(PhaserMicro.Sprite.prototype, {
+Object.defineProperties(PhaserNano.Sprite.prototype, {
 
     'width': {
 
@@ -2084,7 +2141,7 @@ Object.defineProperties(PhaserMicro.Sprite.prototype, {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Matrix = function() {
+PhaserNano.Matrix = function() {
 
     this.a = 1;
     this.b = 0;
@@ -2095,7 +2152,7 @@ PhaserMicro.Matrix = function() {
 
 };
 
-PhaserMicro.Matrix.prototype = {
+PhaserNano.Matrix.prototype = {
 
     set: function (a, b, c, d, tx, ty) {
 
@@ -2113,7 +2170,7 @@ PhaserMicro.Matrix.prototype = {
 };
 
 /*
-PhaserMicro.Matrix.prototype = {
+PhaserNano.Matrix.prototype = {
 
     fromArray: function (array) {
 
@@ -2261,7 +2318,7 @@ PhaserMicro.Matrix.prototype = {
 
 };
 
-PhaserMicro.identityMatrix = new PhaserMicro.Matrix();
+PhaserNano.identityMatrix = new PhaserNano.Matrix();
 
 */
 
@@ -2283,7 +2340,7 @@ PhaserMicro.identityMatrix = new PhaserMicro.Matrix();
 * @param {number} width - The width of the Rectangle. Should always be either zero or a positive value.
 * @param {number} height - The height of the Rectangle. Should always be either zero or a positive value.
 */
-PhaserMicro.Rectangle = function (x, y, width, height) {
+PhaserNano.Rectangle = function (x, y, width, height) {
 
     x = x || 0;
     y = y || 0;
@@ -2312,7 +2369,7 @@ PhaserMicro.Rectangle = function (x, y, width, height) {
 
 };
 
-PhaserMicro.Rectangle.prototype = {
+PhaserNano.Rectangle.prototype = {
 
     copyFrom: function (src) {
 
@@ -2325,13 +2382,13 @@ PhaserMicro.Rectangle.prototype = {
 
     clone: function () {
 
-        return new PhaserMicro.Rectangle(this.x, this.y, this.width, this.height);
+        return new PhaserNano.Rectangle(this.x, this.y, this.width, this.height);
 
     }
 
 };
 
-PhaserMicro.Point = function (x, y) {
+PhaserNano.Point = function (x, y) {
 
     x = x || 0;
     y = y || 0;
@@ -2348,7 +2405,7 @@ PhaserMicro.Point = function (x, y) {
 
 };
 
-PhaserMicro.Point.prototype = {
+PhaserNano.Point.prototype = {
 
     /**
     * Sets the `x` and `y` values of this Point object to the given values.
@@ -2376,7 +2433,7 @@ PhaserMicro.Point.prototype = {
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
 */
 
-PhaserMicro.Group = function (game) {
+PhaserNano.Group = function (game) {
 
     this.game = game;
 
@@ -2384,7 +2441,7 @@ PhaserMicro.Group = function (game) {
 
 };
 
-PhaserMicro.Group.prototype = {
+PhaserNano.Group.prototype = {
 
     add: function (child) {
 
@@ -2654,6 +2711,183 @@ PhaserMicro.Group.prototype = {
     }
 
 };
+
+/**
+* @author       Richard Davey <rich@photonstorm.com>
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
+//  A Layer is a Group that lives on the display list and contains Sprites (or other Layers)
+//  A State could be a Layer (could be super-useful)
+ 
+PhaserNano.Layer = function (game, x, y, parent) {
+
+    PhaserNano.Group.call(this, game);
+
+    this.game = game;
+
+    this.create = new PhaserNano.Factory(game, this);
+
+    this.position = new PhaserNano.Point(x, y);
+
+    this.scale = new PhaserNano.Point(1, 1);
+
+    this.pivot = new PhaserNano.Point();
+
+    this.rotation = 0;
+
+    this.alive = true;
+
+    this.visible = true;
+
+    this.parent = parent;
+
+    this.renderable = false;
+
+    this.worldAlpha = 1;
+
+    this.alpha = 1;
+
+    this.worldTransform = new PhaserNano.Matrix();
+
+    //  Could just check for the presence of the children array?
+    this.container = true;
+
+};
+
+PhaserNano.Layer.prototype = Object.create(PhaserNano.Group.prototype);
+PhaserNano.Layer.prototype.constructor = PhaserNano.Layer;
+
+PhaserNano.Layer.prototype.updateFast = function () {
+
+    if (!this.parent)
+    {
+        //  No parent? Then we can optimize to this ...
+        this.worldTransform.set(this.scale.x, 0, 0, this.scale.y, this.position.x - this.pivot.x * this.scale.x, this.position.y - this.pivot.y * this.scale.y);
+        return;
+    }
+
+    var pt = this.parent.worldTransform;
+    var wt = this.worldTransform;
+
+    var a = this.scale.x;
+    var d = this.scale.y;
+
+    var tx = this.position.x - this.pivot.x * a;
+    var ty = this.position.y - this.pivot.y * d;
+
+    wt.a  = a  * pt.a;
+    wt.b  = a  * pt.b;
+    wt.c  = d  * pt.c;
+    wt.d  = d  * pt.d;
+    wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+    wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+
+};
+
+PhaserNano.Layer.prototype.updateRotation = function () {
+
+    var pt = this.parent.worldTransform;
+    var wt = this.worldTransform;
+
+    //  Check to see if the rotation is the same as the previous render.
+    //  This means we only need to use sin and cos when rotation actually changes
+    if (this.rotation !== this._rot)
+    {
+        this._rot = this.rotation;
+        this._sr = Math.sin(this.rotation);
+        this._cr = Math.cos(this.rotation);
+    }
+
+    var a  =  this._cr * this.scale.x;
+    var b  =  this._sr * this.scale.x;
+    var c  = -this._sr * this.scale.y;
+    var d  =  this._cr * this.scale.y;
+    var tx =  this.position.x;
+    var ty =  this.position.y;
+    
+    //  Check for pivot.. not often used so geared towards that fact!
+    if (this.pivot.x || this.pivot.y)
+    {
+        tx -= this.pivot.x * a + this.pivot.y * c;
+        ty -= this.pivot.x * b + this.pivot.y * d;
+    }
+
+    //  Concat the parent matrix with the objects transform
+    wt.a  = a  * pt.a + b  * pt.c;
+    wt.b  = a  * pt.b + b  * pt.d;
+    wt.c  = c  * pt.a + d  * pt.c;
+    wt.d  = c  * pt.b + d  * pt.d;
+    wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+    wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+
+};
+
+PhaserNano.Layer.prototype.updateFastRotation = function () {
+
+    var wt = this.worldTransform;
+
+    //  Check to see if the rotation is the same as the previous render.
+    //  This means we only need to use sin and cos when rotation actually changes
+    if (this.rotation !== this._rot)
+    {
+        this._rot = this.rotation;
+        this._sr = Math.sin(this.rotation);
+        this._cr = Math.cos(this.rotation);
+    }
+
+    var a  =  this._cr * this.scale.x;
+    var b  =  this._sr * this.scale.x;
+    var c  = -this._sr * this.scale.y;
+    var d  =  this._cr * this.scale.y;
+    var tx =  this.position.x;
+    var ty =  this.position.y;
+    
+    //  Check for pivot.. not often used so geared towards that fact!
+    if (this.pivot.x || this.pivot.y)
+    {
+        tx -= this.pivot.x * a + this.pivot.y * c;
+        ty -= this.pivot.x * b + this.pivot.y * d;
+    }
+
+    wt.a  = a;
+    wt.b  = b;
+    wt.c  = c;
+    wt.d  = d;
+    wt.tx = tx;
+    wt.ty = ty;
+
+};
+
+PhaserNano.Layer.prototype.updateTransform = function () {
+
+    if (this.rotation % PhaserNano.PI_2)
+    {
+        if (!this.parent)
+        {
+            this.updateFastRotation();
+            this.worldAlpha = this.alpha;
+        }
+        else
+        {
+            this.updateRotation();
+            this.worldAlpha = this.alpha * this.parent.worldAlpha;
+        }
+    }
+    else
+    {
+        this.updateFast();
+        this.worldAlpha = this.alpha;
+    }
+
+    for (var i = 0; i < this.children.length; i++)
+    {
+        this.children[i].updateTransform();
+    }
+
+};
+
 /**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2015 Photon Storm Ltd.
@@ -2663,7 +2897,7 @@ PhaserMicro.Group.prototype = {
 /**
 * A Frame is a single frame of an animation and is part of a FrameData collection.
 *
-* @class PhaserMicro.Frame
+* @class PhaserNano.Frame
 * @constructor
 * @param {number} index - The index of this Frame within the FrameData set it is being added to.
 * @param {number} x - X position of the frame within the texture image.
@@ -2672,7 +2906,7 @@ PhaserMicro.Group.prototype = {
 * @param {number} height - Height of the frame within the texture image.
 * @param {string} [name] - The name of the frame. In Texture Atlas data this is usually set to the filename.
 */
-PhaserMicro.Frame = function (index, x, y, width, height, name) {
+PhaserNano.Frame = function (index, x, y, width, height, name) {
 
     /**
     * @property {number} index - The index of this Frame within its FrameData set.
@@ -2752,7 +2986,7 @@ PhaserMicro.Frame = function (index, x, y, width, height, name) {
 
 };
 
-PhaserMicro.Frame.prototype = {
+PhaserNano.Frame.prototype = {
 
     /**
     * If the frame was trimmed when added to the Texture Atlas this records the trim and source data.
@@ -2795,7 +3029,7 @@ PhaserMicro.Frame.prototype = {
 
 };
 
-PhaserMicro.Frame.prototype.constructor = PhaserMicro.Frame;
+PhaserNano.Frame.prototype.constructor = PhaserNano.Frame;
 
 /**
 * @author       Richard Davey <rich@photonstorm.com>
@@ -2809,7 +3043,7 @@ PhaserMicro.Frame.prototype.constructor = PhaserMicro.Frame;
 * @class Phaser.FrameData
 * @constructor
 */
-PhaserMicro.FrameData = function () {
+PhaserNano.FrameData = function () {
 
     /**
     * @property {Array} _frames - Local array of Frame objects.
@@ -2829,15 +3063,17 @@ PhaserMicro.FrameData = function () {
     */
     this._names = {};
 
+    this.total = 0;
+
 };
 
-PhaserMicro.FrameData.prototype = {
+PhaserNano.FrameData.prototype = {
 
     addFrame: function (x, y, width, height, name) {
 
         var i = this._frames.length;
 
-        var newFrame = new PhaserMicro.Frame(i, x, y, width, height, name);
+        var newFrame = new PhaserNano.Frame(i, x, y, width, height, name);
 
         //  The base Frame object
         this._frames.push(newFrame);
@@ -2850,6 +3086,8 @@ PhaserMicro.FrameData.prototype = {
         {
             this._names[name] = this._frames[i];
         }
+
+        this.total++;
 
         return newFrame;
 
@@ -2898,19 +3136,66 @@ PhaserMicro.FrameData.prototype = {
 
         return this._names[value];
 
+    },
+
+
+
+};
+/**
+* @author       Richard Davey @photonstorm
+* @copyright    2015 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
+PhaserNano.Factory = function (game, parent) {
+
+    this.game = game;
+
+    this.parent = parent;
+
+};
+
+PhaserNano.Factory.prototype = {
+
+    sprite: function (x, y, key, frame) {
+
+        var sprite = new PhaserNano.Sprite(this.game, x, y, key, frame);
+
+        sprite.parent = this.parent;
+
+        this.parent.children.push(sprite);
+
+        return sprite;
+
+    },
+
+    layer: function (x, y) {
+
+        var layer = new PhaserNano.Layer(this.game, x, y, this.parent);
+
+        this.parent.children.push(layer);
+
+        return layer;
+
+    },
+
+    group: function () {
+
+        return new PhaserNano.Group(this.game);
+
     }
 
 };
     if (typeof exports !== 'undefined') {
         if (typeof module !== 'undefined' && module.exports) {
-            exports = module.exports = PhaserMicro;
+            exports = module.exports = PhaserNano;
         }
-        exports.PhaserMicro = PhaserMicro;
+        exports.PhaserNano = PhaserNano;
     } else if (typeof define !== 'undefined' && define.amd) {
-        define('PhaserMicro', (function() { return root.PhaserMicro = PhaserMicro; })() );
+        define('PhaserNano', (function() { return root.PhaserNano = PhaserNano; })() );
     } else {
-        root.PhaserMicro = PhaserMicro;
+        root.PhaserNano = PhaserNano;
     }
 
-    return PhaserMicro;
+    return PhaserNano;
 }).call(this);

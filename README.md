@@ -6,7 +6,7 @@ Phaser Nano is a highly optimized and bare minimum version of its parent framewo
 
 ## Features
 
-* Only 7.8KB (min/gz) / 25KB (min)
+* Only 8.3KB (min/gz) / 28KB (min)
 * WebGL Renderer with Sprite Batch support
 * Canvas Renderer
 * Asset Loader inc. parallel download streams
