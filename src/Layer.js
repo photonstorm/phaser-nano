@@ -7,11 +7,13 @@
 //  A Layer is a Group that lives on the display list and contains Sprites (or other Layers)
 //  A State could be a Layer (could be super-useful)
  
-PhaserNano.Layer = function (game, x, y) {
+PhaserNano.Layer = function (game, x, y, parent) {
 
     PhaserNano.Group.call(this, game);
 
     this.game = game;
+
+    this.create = new PhaserNano.Factory(game, this);
 
     this.position = new PhaserNano.Point(x, y);
 
@@ -25,7 +27,7 @@ PhaserNano.Layer = function (game, x, y) {
 
     this.visible = true;
 
-    this.parent = null;
+    this.parent = parent;
 
     this.renderable = false;
 
@@ -42,18 +44,6 @@ PhaserNano.Layer = function (game, x, y) {
 
 PhaserNano.Layer.prototype = Object.create(PhaserNano.Group.prototype);
 PhaserNano.Layer.prototype.constructor = PhaserNano.Layer;
-
-PhaserNano.Layer.prototype.create = function (x, y, key, frame) {
-
-    var sprite = new PhaserNano.Sprite(this.game, x, y, key, frame);
-
-    this.add(sprite);
-
-    sprite.parent = this;
-
-    return sprite;
-
-};
 
 PhaserNano.Layer.prototype.updateFast = function () {
 
@@ -147,20 +137,6 @@ PhaserNano.Layer.prototype.updateFastRotation = function () {
         ty -= this.pivot.x * b + this.pivot.y * d;
     }
 
-    // this.a = 1;
-    // this.b = 0;
-    // this.c = 0;
-    // this.d = 1;
-    // this.tx = 0;
-    // this.ty = 0;
-
-    // wt.a  = a  * 1 + b  * 0;
-    // wt.b  = a  * 0 + b  * 1;
-    // wt.c  = c  * 1 + d  * 0;
-    // wt.d  = c  * 0 + d  * 1;
-    // wt.tx = tx * 1 + ty * 0;
-    // wt.ty = tx * 0 + ty * 1;
-
     wt.a  = a;
     wt.b  = b;
     wt.c  = c;
@@ -177,21 +153,19 @@ PhaserNano.Layer.prototype.updateTransform = function () {
         if (!this.parent)
         {
             this.updateFastRotation();
+            this.worldAlpha = this.alpha;
         }
         else
         {
             this.updateRotation();
+            this.worldAlpha = this.alpha * this.parent.worldAlpha;
         }
     }
     else
     {
         this.updateFast();
+        this.worldAlpha = this.alpha;
     }
-
-    // this.worldAlpha = this.alpha * this.parent.worldAlpha;
-    this.worldAlpha = this.alpha;
-
-    // console.log('layer updateTransform', this.worldTransform);
 
     for (var i = 0; i < this.children.length; i++)
     {

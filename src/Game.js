@@ -39,13 +39,13 @@ PhaserNano.Game = function (width, height, renderer, parent, state) {
 
     this.cache = null;
     this.load = null;
+    this.add = null;
+
     this.renderer = null;
 
-    //  Move to World?
-    this.children = [];
-    // this.worldAlpha = 1;
-    // this.worldTransform = new PhaserNano.Matrix();
+    this.world = null;
 
+    //  For frame debugging
     this.frameCount = 0;
     this.frameMax = 1;
 
@@ -95,6 +95,8 @@ PhaserNano.Game.prototype = {
 
         this.cache = new PhaserNano.Cache(this);
         this.load = new PhaserNano.Loader(this);
+        this.world = new PhaserNano.Layer(this, 0, 0);
+        this.add = new PhaserNano.Factory(this, this.world);
 
         //  Create the Canvas
 
@@ -176,15 +178,17 @@ PhaserNano.Game.prototype = {
             this.state.update.call(this.state, this);
         }
 
-        for (var i = 0; i < this.children.length; i++)
-        {
-            sprite = this.children[i];
+        this.world.updateTransform();
 
-            if (sprite.alive)
-            {
-                sprite.updateTransform();
-            }
-        }
+        // for (var i = 0; i < this.children.length; i++)
+        // {
+        //     sprite = this.children[i];
+
+        //     if (sprite.alive)
+        //     {
+        //         sprite.updateTransform();
+        //     }
+        // }
 
         this.renderer.render();
 
@@ -223,19 +227,6 @@ PhaserNano.Game.prototype = {
         }
 
         target.appendChild(this.canvas);
-
-    },
-
-    addChild: function (x, y, key, frame) {
-
-        var sprite = new PhaserNano.Sprite(this, x, y, key, frame);
-
-        //   We shouldn't do this unless we really need to (saves on transform updates)
-        sprite.parent = this.renderer;
-
-        this.children.push(sprite);
-
-        return sprite;
 
     }
 

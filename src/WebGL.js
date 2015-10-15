@@ -240,9 +240,9 @@ PhaserNano.WebGL.prototype = {
 
         var obj;
 
-        for (var i = 0; i < this.game.children.length; i++)
+        for (var i = 0; i < this.game.world.children.length; i++)
         {
-            obj = this.game.children[i];
+            obj = this.game.world.children[i];
 
             if (obj.renderable && obj.alive && obj.visible && obj.worldAlpha > 0)
             {

@@ -16,6 +16,7 @@
     <script src="../src/FrameData.js"></script>
     <script src="../src/Group.js"></script>
     <script src="../src/Layer.js"></script>
+    <script src="../src/Factory.js"></script>
 </head>
 <body>
 
@@ -36,19 +37,17 @@
 
     function create() {
 
-        game.addChild(0, 0, 'sky2');
+        game.add.sprite(0, 0, 'sky2');
 
-        layer = new PhaserNano.Layer(game, 400, 300);
+        layer = game.add.layer(400, 300);
 
         // layer.scale.set(2);
-
-        game.children.push(layer);
 
         var sprite;
 
         for (var x = 0; x < (64 * 9); x += 64)
         {
-            sprite = layer.create(-256 + x, 0, 'atlas_hash_trim', 'diamond');
+            sprite = layer.create.sprite(-256 + x, 0, 'atlas_hash_trim', 'diamond');
             sprite.anchor.set(0.5);
 
             if (x % 128)
@@ -59,7 +58,7 @@
 
         for (var y = 0; y < (64 * 9); y += 64)
         {
-            sprite = layer.create(0, -256 + y, 'atlas_hash_trim', 'diamond');
+            sprite = layer.create.sprite(0, -256 + y, 'atlas_hash_trim', 'diamond');
             sprite.anchor.set(0.5);
 
             if (y % 128)

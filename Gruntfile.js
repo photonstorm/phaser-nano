@@ -30,8 +30,10 @@ module.exports = function (grunt) {
                     'src/Matrix.js',
                     'src/Geometry.js',
                     'src/Group.js',
+                    'src/Layer.js',
                     'src/Frame.js',
                     'src/FrameData.js',
+                    'src/Factory.js',
                     'src/Outro.js'
                 ],
                 dest: 'dist/phaser-nano.js'

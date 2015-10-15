@@ -24,6 +24,9 @@ Phaser Nano is a highly optimized and bare minimum version of its parent framewo
 * Geometry (Point, Rectangle, Matrix)
 * Texture Blitting (render textures directly without needing Sprites)
 * Groups (pool and recycle objects in a Group, unlike Phaser they are no longer display related)
+* Layers (a Group that lives on the Display List with its own transform and can have children)
+* Game World root object
+* Game Object Factory for quick creation of Sprites, Layers and Groups
 
 ## TODO
 
@@ -31,8 +34,6 @@ Phaser Nano is a highly optimized and bare minimum version of its parent framewo
 * Bitmap Text support with texture in atlas
 * Multi-atlas support
 * Rotated atlas frame support
-* World object (a Layer?)
-* Layer (combo of a Group and a Sprite, a parent of children that lives on the display list)
 * Tweens (bare minimum build)
 * Delta Timer
 * Input support (maybe Mouse / Pointer only)
@@ -41,6 +42,7 @@ Phaser Nano is a highly optimized and bare minimum version of its parent framewo
 * Game background color
 * Texture.fromCanvas (then can use it for basic Text support)
 * buildSheet ought to move to FrameData (or Loader?)
+* Remove duplicate updateTransform code from Layer and Sprite
 
 ![div](http://www.phaser.io/images/github/div.png)
 

@@ -51,13 +51,6 @@ PhaserNano.Sprite.prototype = {
 
     updateFast: function () {
 
-        if (!this.parent)
-        {
-            //  No parent? Then we can optimize to this ...
-            this.worldTransform.set(this.scale.x, 0, 0, this.scale.y, this.position.x - this.pivot.x * this.scale.x, this.position.y - this.pivot.y * this.scale.y);
-            return;
-        }
-
         var pt = this.parent.worldTransform;
         var wt = this.worldTransform;
 
